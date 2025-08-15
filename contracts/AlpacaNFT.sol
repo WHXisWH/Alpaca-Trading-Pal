@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+
 contract AlpacaNFT is ERC721, ERC721URIStorage, Ownable {
     uint256 private _tokenIdCounter;
 
@@ -18,13 +19,15 @@ contract AlpacaNFT is ERC721, ERC721URIStorage, Ownable {
         string performanceURI;
         uint256 totalTrades;
         int256 totalPnL;
-        uint256 wins; // Replaced winRate with wins for accuracy
+        uint256 wins;
         uint256 birthTime;
     }
 
     mapping(uint256 => AlpacaTraits) public alpacas;
     mapping(uint256 => string[]) public knowledgeBase;
-    // mapping(address => uint256[]) public ownerAlpacas; // This is redundant and error-prone, ERC721 already tracks ownership.
+    mapping(uint256 => bytes) public encryptedModelData;
+    mapping(uint256 => bool) public isTransferable;
+    mapping(uint256 => address) public modelProvider;
 
     uint256 public mintPrice = 0.01 ether;
     uint256 public constant MAX_SUPPLY = 10000;
@@ -34,6 +37,8 @@ contract AlpacaNFT is ERC721, ERC721URIStorage, Ownable {
     event KnowledgeAdded(uint256 tokenId, string knowledge);
     event ModelUpdated(uint256 tokenId, string newModelURI);
     event TradeRecorded(uint256 tokenId, int256 pnl);
+    event ModelDataStored(uint256 tokenId, address provider);
+    event ModelTransferred(uint256 tokenId, address from, address to);
 
     constructor() ERC721("Alpaca Trading Pal", "ALPACA") Ownable(msg.sender) {}
 
@@ -45,8 +50,6 @@ contract AlpacaNFT is ERC721, ERC721URIStorage, Ownable {
         _tokenIdCounter++;
 
         _safeMint(msg.sender, tokenId);
-        // Note: tokenURI is not set on mint. You will need to call _setTokenURI
-        // later with your metadata, likely after uploading it to IPFS or 0G Storage.
 
         uint256 seed = uint256(keccak256(abi.encodePacked(block.timestamp, msg.sender, tokenId)));
         
@@ -65,7 +68,6 @@ contract AlpacaNFT is ERC721, ERC721URIStorage, Ownable {
             birthTime: block.timestamp
         });
 
-        // ownerAlpacas[msg.sender].push(tokenId); // Removed to avoid data duplication and bugs on transfer
         emit AlpacaMinted(tokenId, msg.sender, _name);
     }
 
@@ -77,6 +79,24 @@ contract AlpacaNFT is ERC721, ERC721URIStorage, Ownable {
         _checkLevelUp(tokenId);
         
         emit KnowledgeAdded(tokenId, knowledge);
+    }
+
+    function storeAIModel(uint256 tokenId, bytes memory encryptedData, address provider) public {
+        require(ownerOf(tokenId) == msg.sender, "Not the owner");
+        encryptedModelData[tokenId] = encryptedData;
+        modelProvider[tokenId] = provider;
+        isTransferable[tokenId] = true;
+        emit ModelDataStored(tokenId, provider);
+    }
+
+    function transferWithModel(uint256 tokenId, address to) public {
+        require(ownerOf(tokenId) == msg.sender, "Not the owner");
+        require(isTransferable[tokenId], "Model not transferable");
+        
+        address previousOwner = msg.sender;
+        _transfer(msg.sender, to, tokenId);
+        
+        emit ModelTransferred(tokenId, previousOwner, to);
     }
 
     function updateModelURI(uint256 tokenId, string memory newModelURI) public {
@@ -93,7 +113,7 @@ contract AlpacaNFT is ERC721, ERC721URIStorage, Ownable {
         alpaca.totalPnL += pnl;
         
         if (isWin) {
-            alpaca.wins++; // Simply increment wins
+            alpaca.wins++;
         }
         
         alpaca.experience += 5;
@@ -108,7 +128,7 @@ contract AlpacaNFT is ERC721, ERC721URIStorage, Ownable {
         
         if (alpaca.experience >= requiredExp) {
             alpaca.level++;
-            alpaca.experience -= requiredExp; // Carry over remaining experience
+            alpaca.experience -= requiredExp;
             emit AlpacaLevelUp(tokenId, alpaca.level);
         }
     }
@@ -121,9 +141,10 @@ contract AlpacaNFT is ERC721, ERC721URIStorage, Ownable {
         return knowledgeBase[tokenId];
     }
 
-    // function getOwnerAlpacas(address owner) public view returns (uint256[] memory) { // This function is removed.
-    //     return ownerAlpacas[owner];
-    // }
+    function getModelData(uint256 tokenId) public view returns (bytes memory, address) {
+        require(ownerOf(tokenId) == msg.sender || modelProvider[tokenId] == msg.sender, "Unauthorized");
+        return (encryptedModelData[tokenId], modelProvider[tokenId]);
+    }
 
     function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory) {
         return super.tokenURI(tokenId);

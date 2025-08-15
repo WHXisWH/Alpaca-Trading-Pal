@@ -6,15 +6,14 @@ import { EthereumPrivateKeyProvider } from "@web3auth/ethereum-provider";
 import { CHAIN_NAMESPACES, IProvider, WEB3AUTH_NETWORK } from "@web3auth/base";
 import Web3 from "web3";
 
-// 0G Testnet configuration
 const chainConfig = {
   chainNamespace: CHAIN_NAMESPACES.EIP155,
-  chainId: "0x278", // 632 in decimal
+  chainId: "0x40D9",
   rpcTarget: "https://evmrpc-testnet.0g.ai",
-  displayName: "0G Chain Testnet",
-  blockExplorerUrl: "https://chainscan-newton.0g.ai",
-  ticker: "A0GI",
-  tickerName: "0G Chain",
+  displayName: "0G-Galileo-Testnet",
+  blockExplorerUrl: "https://chainscan-galileo.0g.ai",
+  ticker: "OG",
+  tickerName: "0G Token",
   logo: "/alpaca/happy.svg",
 };
 
@@ -59,7 +58,6 @@ export function Web3Provider({ children }: Web3ProviderProps) {
   useEffect(() => {
     const init = async () => {
       try {
-        // Check if we have a valid client ID from environment
         const clientId = process.env.NEXT_PUBLIC_WEB3AUTH_CLIENT_ID;
         
         if (!clientId) {
@@ -87,7 +85,6 @@ export function Web3Provider({ children }: Web3ProviderProps) {
         await web3authInstance.initModal();
         setWeb3auth(web3authInstance);
 
-        // Check if already connected
         if (web3authInstance.connected) {
           const web3authProvider = web3authInstance.provider;
           if (web3authProvider) {
@@ -95,7 +92,7 @@ export function Web3Provider({ children }: Web3ProviderProps) {
           }
         }
       } catch (error) {
-        console.warn("Web3Auth initialization failed, wallet connection disabled:", error.message);
+        console.warn("Web3Auth initialization failed, wallet connection disabled:", error instanceof Error ? error.message : error);
       } finally {
         setIsLoading(false);
       }
@@ -134,7 +131,7 @@ export function Web3Provider({ children }: Web3ProviderProps) {
       }
     } catch (error) {
       console.error("Login failed:", error);
-      alert("Failed to connect wallet: " + error.message);
+      alert("Failed to connect wallet: " + (error instanceof Error ? error.message : error));
     } finally {
       setIsLoading(false);
     }

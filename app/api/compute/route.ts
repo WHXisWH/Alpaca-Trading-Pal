@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { zgCompute } from '@/lib/0g/compute';
+import { ZGComputeClient } from '@/lib/0g/compute';
+
+const zgCompute = new ZGComputeClient();
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,22 +22,6 @@ export async function POST(request: NextRequest) {
           verified: strategy.verified,
           cost: strategy.cost.toString(),
           provider: "0G Compute Network"
-        });
-
-      case 'analyzeMarket':
-        const analysis = await zgCompute.analyzeMarketData(body.marketData, prompt);
-        return NextResponse.json({
-          success: true,
-          analysis: analysis.result,
-          verified: analysis.verified
-        });
-
-      case 'trainModel':
-        const training = await zgCompute.trainAlpacaModel(body.knowledgeData, alpacaId);
-        return NextResponse.json({
-          success: true,
-          insights: training.result,
-          verified: training.verified
         });
 
       default:
@@ -62,9 +48,7 @@ export async function GET() {
     endpoints: {
       POST: "Execute AI compute operations",
       actions: [
-        "generateStrategy - Generate trading strategies",
-        "analyzeMarket - Analyze market data", 
-        "trainModel - Train Alpaca models"
+        "generateStrategy - Generate trading strategies"
       ]
     },
     status: "Ready"

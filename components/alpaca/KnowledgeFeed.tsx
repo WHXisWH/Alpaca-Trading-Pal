@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAlpacaContract } from "@/hooks/useContract";
-import { useStorage } from "@/hooks/useStorage";
+import { useKnowledge } from "@/hooks/useKnowledge";
 
 interface KnowledgeFeedProps {
   tokenId: string;
@@ -20,21 +20,28 @@ export default function KnowledgeFeed({ tokenId }: KnowledgeFeedProps) {
   const [knowledge, setKnowledge] = useState("");
   const [isFeeding, setIsFeeding] = useState(false);
   const { feedKnowledge } = useAlpacaContract();
-  const { uploadToStorage } = useStorage();
+  const { addKnowledge, knowledgeItems, loadKnowledge } = useKnowledge(tokenId);
+
+  // Load existing knowledge when component mounts
+  useEffect(() => {
+    loadKnowledge();
+  }, [loadKnowledge]);
 
   const handleFeed = async () => {
     if (!knowledge) return;
     
     setIsFeeding(true);
     try {
-      const storageUri = await uploadToStorage({
-        type: "knowledge",
-        content: knowledge,
-        tokenId,
-      });
+      // Add to knowledge base
+      const knowledgeItem = await addKnowledge(knowledge);
       
-      await feedKnowledge({ tokenId, knowledge: storageUri });
+      // Record to smart contract
+      await feedKnowledge({ tokenId, knowledge: knowledgeItem.storageUrl });
+      
       setKnowledge("");
+      
+      // Reload knowledge to update display
+      await loadKnowledge();
     } catch (error) {
       console.error("Feeding failed:", error);
     } finally {
@@ -77,6 +84,34 @@ export default function KnowledgeFeed({ tokenId }: KnowledgeFeedProps) {
       >
         {isFeeding ? "Feeding..." : "Feed Knowledge"}
       </button>
+
+      {/* Display learned knowledge */}
+      {knowledgeItems.length > 0 && (
+        <div className="mt-6 p-4 bg-green-50 rounded-lg">
+          <h4 className="text-lg font-semibold text-green-800 mb-3">
+            🧠 Learned Knowledge ({knowledgeItems.length})
+          </h4>
+          <div className="space-y-2 max-h-40 overflow-y-auto">
+            {knowledgeItems
+              .filter(item => item.type === "knowledge")
+              .sort((a, b) => b.timestamp - a.timestamp)
+              .slice(0, 5)
+              .map((item) => (
+                <div key={item.id} className="text-sm text-green-700 bg-white p-2 rounded border-l-4 border-green-400">
+                  <div className="font-medium">{item.content}</div>
+                  <div className="text-xs text-green-500 mt-1">
+                    {new Date(item.timestamp).toLocaleString()}
+                  </div>
+                </div>
+              ))}
+            {knowledgeItems.filter(item => item.type === "knowledge").length > 5 && (
+              <div className="text-xs text-green-600 text-center mt-2">
+                ... and {knowledgeItems.filter(item => item.type === "knowledge").length - 5} more knowledge items
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

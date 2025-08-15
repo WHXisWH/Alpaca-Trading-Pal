@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { binanceClient } from '@/lib/trading/binance';
-import { zgCompute } from '@/lib/0g/compute';
+import { ZGComputeClient } from '@/lib/0g/compute';
+
+const zgCompute = new ZGComputeClient();
 
 export async function POST(request: NextRequest) {
   try {

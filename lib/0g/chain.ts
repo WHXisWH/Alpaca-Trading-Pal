@@ -1,10 +1,8 @@
-// 0G Chain configuration and utilities
-
 export const ZG_TESTNET_CONFIG = {
   chainId: 16601,
   chainName: "0G-Galileo-Testnet",
   nativeCurrency: {
-    name: "0G",
+    name: "0G Token",
     symbol: "OG",
     decimals: 18,
   },
@@ -18,18 +16,16 @@ export const ZG_TESTNET_CONFIG = {
 };
 
 export const ZG_CONTRACTS = {
-  // 0G Storage contracts on Galileo testnet
   STORAGE_FLOW: "0xbD75117F80b4E22698D0Cd7612d92BDb8eaff628",
   STORAGE_MINE: "0x3A0d1d67497Ad770d6f72e7f4B8F0BAbaa2A649C",
   STORAGE_MARKET: "0x53191725d260221bBa307D8EeD6e2Be8DD265e19",
   STORAGE_REWARD: "0xd3D4D91125D76112AE256327410Dd0414Ee08Cb4",
-  
-  // 0G DA contract
   DA_ENTRANCE: "0xE75A073dA5bb7b0eC622170Fd268f35E675a957B",
+  DA_SIGNERS: "0x0000000000000000000000000000000000001000",
+  WRAPPED_OG: "0x0000000000000000000000000000000000001002",
 };
 
 export const ZG_SERVICES = {
-  // 0G Compute Network official providers
   COMPUTE_PROVIDERS: {
     "llama-3.3-70b-instruct": "0xf07240Efa67755B5311bc75784a061eDB47165Dd",
     "deepseek-r1-70b": "0x3feE5a4dd5FDb8a32dDA97Bed899830605dBD9D3"
