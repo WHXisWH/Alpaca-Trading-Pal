@@ -1,0 +1,62 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+  
+  html, body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    @apply bg-gradient-to-br from-yellow-50 via-amber-50 to-green-50;
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  
+  body {
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 50%, #ecfdf5 100%);
+    background-attachment: fixed;
+  }
+}
+
+@layer components {
+  .alpaca-card {
+    @apply bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 border-2 border-amber-200;
+  }
+  
+  .alpaca-button {
+    @apply bg-amber-500 hover:bg-amber-600 text-white px-6 py-3 rounded-full font-semibold transition-all transform hover:scale-105;
+  }
+  
+  .alpaca-input {
+    @apply w-full px-4 py-2 rounded-lg border-2 border-amber-200 focus:border-amber-400 focus:outline-none;
+  }
+}
+
+@layer utilities {
+  .text-amber-900 {
+    color: #78350f !important;
+  }
+  
+  .text-amber-700 {
+    color: #b45309 !important;
+  }
+  
+  .bg-amber-500 {
+    background-color: #f59e0b !important;
+  }
+  
+  .bg-amber-600 {
+    background-color: #d97706 !important;
+  }
+  
+  .bg-green-500 {
+    background-color: #10b981 !important;
+  }
+  
+  .bg-green-600 {
+    background-color: #059669 !important;
+  }
+}

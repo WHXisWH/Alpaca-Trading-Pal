@@ -1,0 +1,12 @@
+export const CONTRACT_ADDRESSES = {
+  ALPACA_NFT: "0x0000000000000000000000000000000000000000",
+  STORAGE_FLOW: "0xbD75117F80b4E22698D0Cd7612d92BDb8eaff628",
+  STORAGE_MARKET: "0x53191725d260221bBa307D8EeD6e2Be8DD265e19",
+};
+
+export const NETWORK = {
+  chainId: 16601,
+  name: "0G-Galileo-Testnet",
+  rpcUrl: "https://evmrpc-testnet.0g.ai",
+  explorer: "https://chainscan-galileo.0g.ai",
+};
