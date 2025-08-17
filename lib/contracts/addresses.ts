@@ -8,6 +8,6 @@ export const CONTRACT_ADDRESSES = {
 export const NETWORK = {
   chainId: 16601,
   name: "0G-Galileo-Testnet",
-  rpcUrl: "https://evmrpc-testnet.0g.ai",
+  rpcUrl: "https://rpc.ankr.com/0g_galileo_testnet_evm",
   explorer: "https://chainscan-galileo.0g.ai",
 };

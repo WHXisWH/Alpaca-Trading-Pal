@@ -7,7 +7,7 @@ export const ZG_TESTNET_CONFIG = {
     decimals: 18,
   },
   rpcUrls: [
-    "https://evmrpc-testnet.0g.ai"
+    "https://rpc.ankr.com/0g_galileo_testnet_evm"
   ],
   blockExplorerUrls: [
     "https://chainscan-galileo.0g.ai"

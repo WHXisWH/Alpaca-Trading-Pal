@@ -4,7 +4,7 @@ import { StorageUploadResult, ZGStorageConfig } from "@/types/0g";
 const DEFAULT_CONFIG: ZGStorageConfig = {
   endpoint: "https://rpc-testnet.0g.ai",
   indexerEndpoint: "https://indexer-testnet.0g.ai",
-  evmRpc: "https://evmrpc-testnet.0g.ai",
+  evmRpc: "https://rpc.ankr.com/0g_galileo_testnet_evm",
   privateKey: process.env.PRIVATE_KEY || "",
 };
 

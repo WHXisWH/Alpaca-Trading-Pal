@@ -4,12 +4,14 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { Web3Auth } from "@web3auth/modal";
 import { EthereumPrivateKeyProvider } from "@web3auth/ethereum-provider";
 import { CHAIN_NAMESPACES, IProvider, WEB3AUTH_NETWORK } from "@web3auth/base";
+import { MetamaskAdapter } from "@web3auth/metamask-adapter";
+import { WalletConnectV2Adapter } from "@web3auth/wallet-connect-v2-adapter";
 import Web3 from "web3";
 
 const chainConfig = {
   chainNamespace: CHAIN_NAMESPACES.EIP155,
   chainId: "0x40D9",
-  rpcTarget: "https://evmrpc-testnet.0g.ai",
+  rpcTarget: "https://rpc.ankr.com/0g_galileo_testnet_evm",
   displayName: "0G-Galileo-Testnet",
   blockExplorerUrl: "https://chainscan-galileo.0g.ai",
   ticker: "OG",
@@ -29,6 +31,7 @@ interface Web3ContextType {
   isConnected: boolean;
   isLoading: boolean;
   login: () => Promise<void>;
+  loginWithWallet: () => Promise<void>;
   logout: () => Promise<void>;
   getUserInfo: () => Promise<any>;
 }
@@ -54,6 +57,7 @@ export function Web3Provider({ children }: Web3ProviderProps) {
   const [address, setAddress] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDirectWallet, setIsDirectWallet] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -81,6 +85,35 @@ export function Web3Provider({ children }: Web3ProviderProps) {
             },
           },
         });
+
+        // Configure MetaMask adapter
+        const metamaskAdapter = new MetamaskAdapter({
+          clientId,
+          sessionTime: 3600, // 1 hour in seconds
+          web3AuthNetwork: WEB3AUTH_NETWORK.SAPPHIRE_DEVNET,
+          chainConfig,
+        });
+        web3authInstance.configureAdapter(metamaskAdapter);
+
+        // Configure WalletConnect adapter
+        const walletConnectV2Adapter = new WalletConnectV2Adapter({
+          clientId,
+          sessionTime: 3600, // 1 hour in seconds
+          web3AuthNetwork: WEB3AUTH_NETWORK.SAPPHIRE_DEVNET,
+          chainConfig,
+          adapterSettings: {
+            walletConnectInitOptions: {
+              projectId: process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID || "0x4f26ffbe5f04ed43630fdc30c05b1ace",
+              metadata: {
+                name: "Alpaca Trading Pal",
+                description: "Your AI-powered trading companion on 0G Chain",
+                url: "https://alpaca-trading-pal.com",
+                icons: ["/alpaca/happy.svg"],
+              },
+            },
+          },
+        });
+        web3authInstance.configureAdapter(walletConnectV2Adapter);
 
         await web3authInstance.initModal();
         setWeb3auth(web3authInstance);
@@ -137,19 +170,84 @@ export function Web3Provider({ children }: Web3ProviderProps) {
     }
   };
 
-  const logout = async () => {
-    if (!web3auth) {
-      console.error("Web3Auth not initialized");
-      return;
-    }
-
+  const loginWithWallet = async () => {
     try {
       setIsLoading(true);
-      await web3auth.logout();
-      setProvider(null);
-      setWeb3(null);
-      setAddress(null);
-      setIsConnected(false);
+      
+      // Check if MetaMask is available
+      if (typeof window !== 'undefined' && (window as any).ethereum) {
+        const ethereum = (window as any).ethereum;
+        
+        // Request account access
+        const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+        
+        if (accounts.length > 0) {
+          // Switch to 0G Chain if not already connected
+          try {
+            await ethereum.request({
+              method: 'wallet_switchEthereumChain',
+              params: [{ chainId: chainConfig.chainId }],
+            });
+          } catch (switchError: any) {
+            // Chain not added, add it
+            if (switchError.code === 4902) {
+              await ethereum.request({
+                method: 'wallet_addEthereumChain',
+                params: [{
+                  chainId: chainConfig.chainId,
+                  chainName: chainConfig.displayName,
+                  nativeCurrency: {
+                    name: chainConfig.tickerName,
+                    symbol: chainConfig.ticker,
+                    decimals: 18,
+                  },
+                  rpcUrls: [chainConfig.rpcTarget],
+                  blockExplorerUrls: [chainConfig.blockExplorerUrl],
+                }],
+              });
+            }
+          }
+          
+          // Create Web3 instance with MetaMask provider
+          const web3Instance = new Web3(ethereum);
+          setWeb3(web3Instance);
+          setProvider(ethereum);
+          setAddress(accounts[0]);
+          setIsConnected(true);
+          setIsDirectWallet(true);
+        }
+      } else {
+        alert("MetaMask is not installed. Please install MetaMask or use social login instead.");
+      }
+    } catch (error) {
+      console.error("Direct wallet connection failed:", error);
+      alert("Failed to connect wallet: " + (error instanceof Error ? error.message : error));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const logout = async () => {
+    try {
+      setIsLoading(true);
+      
+      if (isDirectWallet) {
+        // For direct wallet connections, just clear state
+        setProvider(null);
+        setWeb3(null);
+        setAddress(null);
+        setIsConnected(false);
+        setIsDirectWallet(false);
+      } else if (web3auth) {
+        // For Web3Auth connections, use proper logout
+        await web3auth.logout();
+        setProvider(null);
+        setWeb3(null);
+        setAddress(null);
+        setIsConnected(false);
+      } else {
+        console.error("No connection method available for logout");
+      }
     } catch (error) {
       console.error("Logout failed:", error);
     } finally {
@@ -180,6 +278,7 @@ export function Web3Provider({ children }: Web3ProviderProps) {
     isConnected,
     isLoading,
     login,
+    loginWithWallet,
     logout,
     getUserInfo,
   };

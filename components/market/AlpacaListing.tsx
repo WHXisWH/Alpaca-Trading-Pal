@@ -22,7 +22,7 @@ export default function AlpacaListing({ listing }: AlpacaListingProps) {
     >
       <div className="text-center mb-4">
         <Image
-          src="/alpaca/happy.svg"
+          src="/alpaca/moderate.webp"
           alt={listing.name}
           width={120}
           height={120}

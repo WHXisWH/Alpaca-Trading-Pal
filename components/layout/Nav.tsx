@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useState } from "react";
 import { useWeb3 } from "@/providers/Web3Provider";
 import { Button } from "@/components/ui/Button";
 
 export default function Nav() {
-  const { address, isConnected, isLoading, login, logout } = useWeb3();
+  const { address, isConnected, isLoading, login, loginWithWallet, logout } = useWeb3();
+  const [showLoginOptions, setShowLoginOptions] = useState(false);
 
   const formatAddress = (addr: string) => {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
@@ -18,7 +20,7 @@ export default function Nav() {
         <div className="flex justify-between items-center h-16">
           <Link href="/" className="flex items-center gap-2">
             <Image
-              src="/logo.png"
+              src="/logo.webp"
               alt="Logo"
               width={40}
               height={40}
@@ -44,7 +46,6 @@ export default function Nav() {
               </Link>
             )}
             
-            {/* Web3Auth Connect Button */}
             <div className="flex items-center gap-2">
               {isLoading ? (
                 <Button disabled className="alpaca-button">
@@ -63,12 +64,43 @@ export default function Nav() {
                   </Button>
                 </div>
               ) : (
-                <Button 
-                  onClick={login}
-                  className="alpaca-button"
-                >
-                  Connect Wallet
-                </Button>
+                <div className="relative">
+                  {showLoginOptions ? (
+                    <div className="absolute right-0 top-0 bg-white border border-amber-200 rounded-lg shadow-lg p-2 min-w-[200px]">
+                      <Button 
+                        onClick={() => {
+                          login();
+                          setShowLoginOptions(false);
+                        }}
+                        className="w-full mb-2 bg-amber-600 hover:bg-amber-700 text-white text-sm py-2"
+                      >
+                        Social Login
+                      </Button>
+                      <Button 
+                        onClick={() => {
+                          loginWithWallet();
+                          setShowLoginOptions(false);
+                        }}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm py-2"
+                      >
+                        Connect Wallet
+                      </Button>
+                      <Button 
+                        onClick={() => setShowLoginOptions(false)}
+                        className="w-full mt-2 bg-gray-400 hover:bg-gray-500 text-white text-xs py-1"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button 
+                      onClick={() => setShowLoginOptions(true)}
+                      className="alpaca-button"
+                    >
+                      Connect
+                    </Button>
+                  )}
+                </div>
               )}
             </div>
           </div>

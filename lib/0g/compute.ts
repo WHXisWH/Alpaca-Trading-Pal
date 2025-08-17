@@ -20,7 +20,7 @@ export class ZGComputeClient {
           throw new Error("Private key required for compute operations");
         }
         
-        const provider = new Web3.providers.HttpProvider("https://evmrpc-testnet.0g.ai");
+        const provider = new Web3.providers.HttpProvider("https://rpc.ankr.com/0g_galileo_testnet_evm");
         this.web3 = new Web3(provider);
         this.account = this.web3.eth.accounts.privateKeyToAccount(privateKey).address;
       }

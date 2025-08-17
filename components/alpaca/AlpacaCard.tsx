@@ -16,10 +16,10 @@ export default function AlpacaCard({ tokenId }: AlpacaCardProps) {
   }
 
   const getMoodImage = () => {
-    if (!alpaca) return "/alpaca/sleepy.svg";
-    if (alpaca.winRate > 60) return "/alpaca/excited.svg";
-    if (alpaca.winRate > 40) return "/alpaca/happy.svg";
-    return "/alpaca/thinking.svg";
+    if (!alpaca) return "/alpaca/default.webp";
+    if (alpaca.riskAppetite === 0) return "/alpaca/conservative.webp";
+    if (alpaca.riskAppetite === 2) return "/alpaca/aggressive.webp";
+    return "/alpaca/moderate.webp";
   };
 
   return (

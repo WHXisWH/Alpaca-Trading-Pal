@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   title: "Alpaca Trading Pal",
   description: "Your AI-powered trading companion on 0G Chain",
   icons: {
-    icon: "/favicon.png",
+    icon: "/favicon.webp",
   },
 };
 

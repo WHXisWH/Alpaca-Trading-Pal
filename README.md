@@ -187,7 +187,7 @@ POST /api/trading
 
 ### Galileo Testnet
 - **Chain ID**: 16601
-- **RPC URL**: https://evmrpc-testnet.0g.ai
+- **RPC URL**: https://rpc.ankr.com/0g_galileo_testnet_evm
 - **Explorer**: https://chainscan-galileo.0g.ai
 - **Faucet**: https://faucet.0g.ai
 
