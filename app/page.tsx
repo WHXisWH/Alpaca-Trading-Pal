@@ -38,7 +38,7 @@ export default function Home() {
         >
         <div className="mb-8">
           <Image
-            src="/alpaca/happy.svg"
+            src="/logo.png"
             alt="Happy Alpaca"
             width={200}
             height={200}

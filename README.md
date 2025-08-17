@@ -268,14 +268,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Binance**: For comprehensive trading APIs
 - **Next.js Team**: For the amazing React framework
 
-## 🔗 Links
-
-- **Live Demo**: [https://alpaca-trading-pal.vercel.app](https://alpaca-trading-pal.vercel.app)
-- **0G Chain**: [https://0g.ai](https://0g.ai)
-- **Documentation**: [https://docs.0g.ai](https://docs.0g.ai)
-- **Discord**: [Join our community](https://discord.gg/0g)
-
----
 
 <div align="center">
 

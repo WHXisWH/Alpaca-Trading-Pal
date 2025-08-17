@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useAutoTrading } from "@/hooks/useAutoTrading";
 import { motion } from "framer-motion";
+import Image from "next/image";
 
 interface TradingPanelProps {
   tokenId: string;
@@ -166,13 +167,17 @@ export default function TradingPanel({ tokenId }: TradingPanelProps) {
         <div className="bg-purple-50 p-3 rounded-lg">
           <div className="flex items-center justify-between">
             <span className="text-purple-700 font-semibold">Last Action</span>
-            <span className={`font-bold ${
-              status.lastAction === "BUY" ? "text-green-600" :
-              status.lastAction === "SELL" ? "text-red-600" :
-              "text-gray-600"
-            }`}>
-              {status.lastAction}
-            </span>
+            <div className="flex items-center gap-2">
+              {status.lastAction === "BUY" && <Image src="/icons/buy-signal.png" alt="Buy" width={20} height={20} />}
+              {status.lastAction === "SELL" && <Image src="/icons/sell-signal.png" alt="Sell" width={20} height={20} />}
+              <span className={`font-bold ${
+                status.lastAction === "BUY" ? "text-green-600" :
+                status.lastAction === "SELL" ? "text-red-600" :
+                "text-gray-600"
+              }`}>
+                {status.lastAction}
+              </span>
+            </div>
           </div>
         </div>
       )}

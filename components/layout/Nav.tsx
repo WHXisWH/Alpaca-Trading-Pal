@@ -18,7 +18,7 @@ export default function Nav() {
         <div className="flex justify-between items-center h-16">
           <Link href="/" className="flex items-center gap-2">
             <Image
-              src="/alpaca/happy.svg"
+              src="/logo.png"
               alt="Logo"
               width={40}
               height={40}
