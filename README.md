@@ -5,7 +5,7 @@
 Alpaca Trading Pal is a revolutionary DeFi application that combines NFTs, AI, and decentralized trading into a gamified experience. Each Alpaca is a unique, evolvable AI trading companion that learns, grows, and trades on your behalf.
 
 [![Built on 0G Chain](https://img.shields.io/badge/Built%20on-0G%20Chain-blue)](https://0g.ai)
-[![Next.js](https://img.shields.io/badge/Next.js-14-black)](https://nextjs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-15-black)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue)](https://www.typescriptlang.org/)
 [![Solidity](https://img.shields.io/badge/Solidity-0.8.20-brightgreen)](https://soliditylang.org/)
 
@@ -151,7 +151,7 @@ const strategy = await zgCompute.generateTradingStrategy(
 
 ### 1. Mint Your Alpaca
 ```
-Visit /mint → Connect Wallet → Name Your Alpaca → Pay 0.01 OG → Receive NFT
+Visit /mint → Connect Wallet → Name Your Alpaca → Pay 0.01 0G → Receive NFT
 ```
 
 ### 2. Feed Knowledge
@@ -293,6 +293,14 @@ npm run type-check
 2. **Environment Variables**: Ensure all required env vars are set
 3. **Network Configuration**: Verify 0G Chain is properly configured in your wallet
 4. **Web3Auth Setup**: Confirm Web3Auth client ID is valid
+5. **Token Symbol Conflict**: If you see "nativeCurrency.symbol does not match" error:
+   - Remove existing 0G Chain network from MetaMask
+   - Clear MetaMask cache or restart extension
+   - Re-add the network through our app (correct symbol: "0G", not "OG")
+
+#### Connection Options
+- **🔗 Web3 Wallets**: Use Web3Auth modal for multiple wallet options (MetaMask, WalletConnect, etc.)
+- **🦊 MetaMask Direct**: Direct connection to MetaMask extension (faster but MetaMask-only)
 
 #### RPC Issues
 - **Primary RPC**: `https://rpc.ankr.com/0g_galileo_testnet_evm`

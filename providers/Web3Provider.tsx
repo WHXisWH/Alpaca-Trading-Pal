@@ -14,7 +14,7 @@ const chainConfig = {
   rpcTarget: "https://rpc.ankr.com/0g_galileo_testnet_evm",
   displayName: "0G-Galileo-Testnet",
   blockExplorerUrl: "https://chainscan-galileo.0g.ai",
-  ticker: "OG",
+  ticker: "0G",
   tickerName: "0G Token",
   logo: "/alpaca/happy.svg",
 };
@@ -123,7 +123,7 @@ export function Web3Provider({ children }: Web3ProviderProps) {
                 metadata: {
                   name: "Alpaca Trading Pal",
                   description: "Your AI-powered trading companion on 0G Chain",
-                  url: "https://alpaca-trading-pal.com",
+                  url: "https://alpaca-trading-pal.vercel.app",
                   icons: ["/alpaca/happy.svg"],
                 },
               },
@@ -221,13 +221,27 @@ export function Web3Provider({ children }: Web3ProviderProps) {
       
       // Check if MetaMask is available
       if (typeof window !== 'undefined' && (window as any).ethereum) {
-        const ethereum = (window as any).ethereum;
+        let ethereum = (window as any).ethereum;
+        
+        // Handle multiple wallet providers
+        if (ethereum.providers && ethereum.providers.length > 0) {
+          console.log("🔧 Multiple wallet providers detected:", ethereum.providers.length);
+          // Find MetaMask specifically
+          const metamaskProvider = ethereum.providers.find((provider: any) => provider.isMetaMask);
+          if (metamaskProvider) {
+            ethereum = metamaskProvider;
+            console.log("✅ Using MetaMask provider from multiple providers");
+          } else {
+            console.log("⚠️ MetaMask not found in multiple providers");
+          }
+        }
         
         // Check if it's actually MetaMask
         if (ethereum.isMetaMask) {
           console.log("✅ MetaMask detected (verified)");
         } else {
           console.log("⚠️ Ethereum provider detected but not verified as MetaMask");
+          console.log("Provider info:", ethereum);
         }
         
         console.log("🔧 Provider details:", {
@@ -237,13 +251,22 @@ export function Web3Provider({ children }: Web3ProviderProps) {
           selectedAddress: ethereum.selectedAddress
         });
         
+        // Wait a bit to ensure MetaMask is ready
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         // Check if MetaMask is unlocked by checking if there are already accounts
         let existingAccounts;
         try {
+          console.log("🔍 Checking existing accounts...");
           existingAccounts = await ethereum.request({ method: 'eth_accounts' });
           console.log("🔍 Existing accounts:", existingAccounts);
-        } catch (error) {
+        } catch (error: any) {
           console.log("⚠️ Could not check existing accounts:", error);
+          console.log("Error details:", {
+            code: error.code,
+            message: error.message,
+            stack: error.stack
+          });
         }
         
         console.log("🔧 Requesting account access...");

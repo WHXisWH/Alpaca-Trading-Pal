@@ -66,28 +66,37 @@ export default function Nav() {
               ) : (
                 <div className="relative">
                   {showLoginOptions ? (
-                    <div className="absolute right-0 top-0 bg-white border border-amber-200 rounded-lg shadow-lg p-2 min-w-[200px]">
+                    <div className="absolute right-0 top-0 bg-white border border-amber-200 rounded-lg shadow-lg p-3 min-w-[250px]">
+                      <div className="text-center mb-3">
+                        <h3 className="font-semibold text-amber-900 text-sm">Connect to Alpaca Trading Pal</h3>
+                        <p className="text-xs text-gray-600 mt-1">Choose your preferred connection method</p>
+                      </div>
+                      
                       <Button 
                         onClick={() => {
                           login();
                           setShowLoginOptions(false);
                         }}
-                        className="w-full mb-2 bg-amber-600 hover:bg-amber-700 text-white text-sm py-2"
+                        className="w-full mb-2 bg-blue-600 hover:bg-blue-700 text-white text-sm py-3 flex items-center justify-center gap-2"
                       >
-                        Social Login
+                        <span>🔗</span> Web3 Wallets
                       </Button>
+                      <div className="text-xs text-gray-500 text-center mb-2">MetaMask, WalletConnect, and more</div>
+                      
                       <Button 
                         onClick={() => {
                           loginWithWallet();
                           setShowLoginOptions(false);
                         }}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm py-2"
+                        className="w-full mb-2 bg-orange-600 hover:bg-orange-700 text-white text-sm py-3 flex items-center justify-center gap-2"
                       >
-                        Connect Wallet
+                        <span>🦊</span> MetaMask Direct
                       </Button>
+                      <div className="text-xs text-gray-500 text-center mb-3">Direct MetaMask connection</div>
+                      
                       <Button 
                         onClick={() => setShowLoginOptions(false)}
-                        className="w-full mt-2 bg-gray-400 hover:bg-gray-500 text-white text-xs py-1"
+                        className="w-full bg-gray-400 hover:bg-gray-500 text-white text-xs py-2"
                       >
                         Cancel
                       </Button>
@@ -97,7 +106,7 @@ export default function Nav() {
                       onClick={() => setShowLoginOptions(true)}
                       className="alpaca-button"
                     >
-                      Connect
+                      Connect Wallet
                     </Button>
                   )}
                 </div>

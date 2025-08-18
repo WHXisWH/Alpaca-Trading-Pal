@@ -3,7 +3,7 @@ export const ZG_TESTNET_CONFIG = {
   chainName: "0G-Galileo-Testnet",
   nativeCurrency: {
     name: "0G Token",
-    symbol: "OG",
+    symbol: "0G",
     decimals: 18,
   },
   rpcUrls: [
