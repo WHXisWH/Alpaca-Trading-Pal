@@ -107,28 +107,33 @@ export function Web3Provider({ children }: Web3ProviderProps) {
         console.log("✅ MetaMask adapter configured");
 
         // Configure WalletConnect adapter
-        const walletConnectProjectId = process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID || "0x4f26ffbe5f04ed43630fdc30c05b1ace";
-        console.log("🔧 Configuring WalletConnect adapter with project ID:", walletConnectProjectId);
+        const walletConnectProjectId = process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID;
         
-        const walletConnectV2Adapter = new WalletConnectV2Adapter({
-          clientId,
-          sessionTime: 3600, // 1 hour in seconds
-          web3AuthNetwork: WEB3AUTH_NETWORK.SAPPHIRE_DEVNET,
-          chainConfig,
-          adapterSettings: {
-            walletConnectInitOptions: {
-              projectId: walletConnectProjectId,
-              metadata: {
-                name: "Alpaca Trading Pal",
-                description: "Your AI-powered trading companion on 0G Chain",
-                url: "https://alpaca-trading-pal.com",
-                icons: ["/alpaca/happy.svg"],
+        if (walletConnectProjectId) {
+          console.log("🔧 Configuring WalletConnect adapter with project ID:", walletConnectProjectId);
+          
+          const walletConnectV2Adapter = new WalletConnectV2Adapter({
+            clientId,
+            sessionTime: 3600, // 1 hour in seconds
+            web3AuthNetwork: WEB3AUTH_NETWORK.SAPPHIRE_DEVNET,
+            chainConfig,
+            adapterSettings: {
+              walletConnectInitOptions: {
+                projectId: walletConnectProjectId,
+                metadata: {
+                  name: "Alpaca Trading Pal",
+                  description: "Your AI-powered trading companion on 0G Chain",
+                  url: "https://alpaca-trading-pal.com",
+                  icons: ["/alpaca/happy.svg"],
+                },
               },
             },
-          },
-        });
-        web3authInstance.configureAdapter(walletConnectV2Adapter);
-        console.log("✅ WalletConnect adapter configured");
+          });
+          web3authInstance.configureAdapter(walletConnectV2Adapter);
+          console.log("✅ WalletConnect adapter configured");
+        } else {
+          console.warn("⚠️ WalletConnect project ID not provided, skipping WalletConnect adapter");
+        }
 
         console.log("🔧 Initializing Web3Auth modal...");
         await web3authInstance.initModal();
