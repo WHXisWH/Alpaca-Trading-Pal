@@ -62,13 +62,22 @@ export function Web3Provider({ children }: Web3ProviderProps) {
   useEffect(() => {
     const init = async () => {
       try {
+        console.log("🔧 Web3Provider: Starting initialization...");
         const clientId = process.env.NEXT_PUBLIC_WEB3AUTH_CLIENT_ID;
         
         if (!clientId) {
-          console.warn("Web3Auth client ID not provided, wallet connection disabled");
+          console.warn("❌ Web3Auth client ID not provided, wallet connection disabled");
           setIsLoading(false);
           return;
         }
+        
+        console.log("✅ Web3Auth client ID found:", clientId.substring(0, 20) + "...");
+        
+        console.log("🔧 Creating Web3Auth instance with config:", {
+          clientId: clientId.substring(0, 20) + "...",
+          network: WEB3AUTH_NETWORK.SAPPHIRE_DEVNET,
+          chainConfig
+        });
         
         const web3authInstance = new Web3Auth({
           clientId,
@@ -87,6 +96,7 @@ export function Web3Provider({ children }: Web3ProviderProps) {
         });
 
         // Configure MetaMask adapter
+        console.log("🔧 Configuring MetaMask adapter...");
         const metamaskAdapter = new MetamaskAdapter({
           clientId,
           sessionTime: 3600, // 1 hour in seconds
@@ -94,8 +104,12 @@ export function Web3Provider({ children }: Web3ProviderProps) {
           chainConfig,
         });
         web3authInstance.configureAdapter(metamaskAdapter);
+        console.log("✅ MetaMask adapter configured");
 
         // Configure WalletConnect adapter
+        const walletConnectProjectId = process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID || "0x4f26ffbe5f04ed43630fdc30c05b1ace";
+        console.log("🔧 Configuring WalletConnect adapter with project ID:", walletConnectProjectId);
+        
         const walletConnectV2Adapter = new WalletConnectV2Adapter({
           clientId,
           sessionTime: 3600, // 1 hour in seconds
@@ -103,7 +117,7 @@ export function Web3Provider({ children }: Web3ProviderProps) {
           chainConfig,
           adapterSettings: {
             walletConnectInitOptions: {
-              projectId: process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID || "0x4f26ffbe5f04ed43630fdc30c05b1ace",
+              projectId: walletConnectProjectId,
               metadata: {
                 name: "Alpaca Trading Pal",
                 description: "Your AI-powered trading companion on 0G Chain",
@@ -114,20 +128,28 @@ export function Web3Provider({ children }: Web3ProviderProps) {
           },
         });
         web3authInstance.configureAdapter(walletConnectV2Adapter);
+        console.log("✅ WalletConnect adapter configured");
 
+        console.log("🔧 Initializing Web3Auth modal...");
         await web3authInstance.initModal();
+        console.log("✅ Web3Auth modal initialized");
         setWeb3auth(web3authInstance);
 
         if (web3authInstance.connected) {
+          console.log("🔗 Existing Web3Auth connection found, reconnecting...");
           const web3authProvider = web3authInstance.provider;
           if (web3authProvider) {
             await handleConnection(web3authProvider);
           }
+        } else {
+          console.log("ℹ️ No existing Web3Auth connection found");
         }
       } catch (error) {
-        console.warn("Web3Auth initialization failed, wallet connection disabled:", error instanceof Error ? error.message : error);
+        console.error("❌ Web3Auth initialization failed:", error);
+        console.error("Error details:", error instanceof Error ? error.stack : error);
       } finally {
         setIsLoading(false);
+        console.log("✅ Web3Provider initialization completed");
       }
     };
 
@@ -136,94 +158,137 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 
   const handleConnection = async (web3authProvider: IProvider) => {
     try {
+      console.log("🔗 Handling wallet connection...");
       setProvider(web3authProvider);
       const web3Instance = new Web3(web3authProvider as any);
       setWeb3(web3Instance);
 
+      console.log("🔧 Getting accounts from provider...");
       const accounts = await web3Instance.eth.getAccounts();
+      console.log("📋 Accounts found:", accounts);
+      
       if (accounts.length > 0) {
         setAddress(accounts[0]);
         setIsConnected(true);
+        console.log("✅ Wallet connected successfully:", accounts[0]);
+      } else {
+        console.warn("⚠️ No accounts found in wallet");
       }
     } catch (error) {
-      console.error("Connection handling failed:", error);
+      console.error("❌ Connection handling failed:", error);
+      console.error("Error details:", error instanceof Error ? error.stack : error);
     }
   };
 
   const login = async () => {
+    console.log("🚀 Starting social login process...");
     if (!web3auth) {
+      console.error("❌ Web3Auth not initialized");
       alert("Wallet connection is disabled. Please configure Web3Auth client ID in environment variables.");
       return;
     }
 
     try {
       setIsLoading(true);
+      console.log("🔧 Attempting Web3Auth connection...");
       const web3authProvider = await web3auth.connect();
+      console.log("🔗 Web3Auth connect result:", web3authProvider ? "Success" : "Failed");
+      
       if (web3authProvider) {
         await handleConnection(web3authProvider);
+      } else {
+        console.warn("⚠️ Web3Auth returned no provider");
       }
     } catch (error) {
-      console.error("Login failed:", error);
+      console.error("❌ Social login failed:", error);
+      console.error("Error details:", error instanceof Error ? error.stack : error);
       alert("Failed to connect wallet: " + (error instanceof Error ? error.message : error));
     } finally {
       setIsLoading(false);
+      console.log("🏁 Social login process completed");
     }
   };
 
   const loginWithWallet = async () => {
+    console.log("🚀 Starting direct wallet connection...");
     try {
       setIsLoading(true);
       
       // Check if MetaMask is available
       if (typeof window !== 'undefined' && (window as any).ethereum) {
         const ethereum = (window as any).ethereum;
+        console.log("✅ MetaMask detected");
+        console.log("🔧 Requesting account access...");
         
         // Request account access
         const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+        console.log("📋 Accounts received:", accounts);
         
         if (accounts.length > 0) {
+          console.log("🔧 Checking current chain...");
+          const currentChain = await ethereum.request({ method: 'eth_chainId' });
+          console.log("⛓️ Current chain ID:", currentChain, "Target:", chainConfig.chainId);
+          
           // Switch to 0G Chain if not already connected
-          try {
-            await ethereum.request({
-              method: 'wallet_switchEthereumChain',
-              params: [{ chainId: chainConfig.chainId }],
-            });
-          } catch (switchError: any) {
-            // Chain not added, add it
-            if (switchError.code === 4902) {
+          if (currentChain !== chainConfig.chainId) {
+            console.log("🔄 Switching to 0G Chain...");
+            try {
               await ethereum.request({
-                method: 'wallet_addEthereumChain',
-                params: [{
-                  chainId: chainConfig.chainId,
-                  chainName: chainConfig.displayName,
-                  nativeCurrency: {
-                    name: chainConfig.tickerName,
-                    symbol: chainConfig.ticker,
-                    decimals: 18,
-                  },
-                  rpcUrls: [chainConfig.rpcTarget],
-                  blockExplorerUrls: [chainConfig.blockExplorerUrl],
-                }],
+                method: 'wallet_switchEthereumChain',
+                params: [{ chainId: chainConfig.chainId }],
               });
+              console.log("✅ Chain switched successfully");
+            } catch (switchError: any) {
+              console.log("⚠️ Chain switch failed:", switchError);
+              // Chain not added, add it
+              if (switchError.code === 4902) {
+                console.log("🔧 Adding 0G Chain to wallet...");
+                await ethereum.request({
+                  method: 'wallet_addEthereumChain',
+                  params: [{
+                    chainId: chainConfig.chainId,
+                    chainName: chainConfig.displayName,
+                    nativeCurrency: {
+                      name: chainConfig.tickerName,
+                      symbol: chainConfig.ticker,
+                      decimals: 18,
+                    },
+                    rpcUrls: [chainConfig.rpcTarget],
+                    blockExplorerUrls: [chainConfig.blockExplorerUrl],
+                  }],
+                });
+                console.log("✅ 0G Chain added successfully");
+              } else {
+                throw switchError;
+              }
             }
+          } else {
+            console.log("✅ Already on correct chain");
           }
           
           // Create Web3 instance with MetaMask provider
+          console.log("🔧 Creating Web3 instance...");
           const web3Instance = new Web3(ethereum);
           setWeb3(web3Instance);
           setProvider(ethereum);
           setAddress(accounts[0]);
           setIsConnected(true);
           setIsDirectWallet(true);
+          console.log("✅ Direct wallet connection successful:", accounts[0]);
+        } else {
+          console.warn("⚠️ No accounts returned from wallet");
         }
       } else {
+        console.error("❌ MetaMask not detected");
         alert("MetaMask is not installed. Please install MetaMask or use social login instead.");
       }
     } catch (error) {
-      console.error("Direct wallet connection failed:", error);
+      console.error("❌ Direct wallet connection failed:", error);
+      console.error("Error details:", error instanceof Error ? error.stack : error);
       alert("Failed to connect wallet: " + (error instanceof Error ? error.message : error));
     } finally {
       setIsLoading(false);
+      console.log("🏁 Direct wallet connection process completed");
     }
   };
 

@@ -57,7 +57,9 @@ alpaca-trading-pal/
 │
 ├── 🎣 hooks/                        # React Hooks
 │   ├── useAlpaca.ts                # Alpaca Data Management
+│   ├── useAutoTrading.ts           # Automated Trading Logic
 │   ├── useContract.ts              # Smart Contract Interactions
+│   ├── useKnowledge.ts             # Knowledge Management
 │   ├── useStorage.ts               # 0G Storage Operations
 │   └── useTrading.ts               # Trading Logic
 │
@@ -65,6 +67,7 @@ alpaca-trading-pal/
 │   ├── 🔗 0g/                       # 0G Chain Integration
 │   │   ├── chain.ts                 # Chain Configuration
 │   │   ├── compute.ts               # 0G Compute Network Client
+│   │   ├── da.ts                    # Data Availability Layer
 │   │   └── storage.ts               # 0G Storage Client
 │   ├── 📋 contracts/                # Contract Utilities
 │   │   ├── abi.ts                   # Contract ABIs
@@ -84,18 +87,29 @@ alpaca-trading-pal/
 │   └── tradingStore.ts             # Trading State (Zustand)
 │
 ├── 🏷️ types/                        # TypeScript Definitions
+│   ├── 0g-serving-broker.d.ts      # 0G Serving Broker Types
 │   ├── 0g.d.ts                     # 0G Chain Types
 │   ├── alpaca.ts                   # Alpaca & NFT Types
 │   └── trading.ts                  # Trading Types
 │
 ├── 🎨 public/                       # Static Assets
 │   ├── 🦙 alpaca/                   # Alpaca Illustrations
-│   │   ├── excited.svg              # Happy Alpaca
-│   │   ├── happy.svg                # Content Alpaca
-│   │   ├── sleepy.svg               # Resting Alpaca
-│   │   └── thinking.svg             # Contemplating Alpaca
-│   └── 🌄 backgrounds/              # Background Assets
-│       └── meadow.svg               # Nature Background
+│   │   ├── aggressive.webp          # Aggressive Trading Alpaca
+│   │   ├── conservative.webp        # Conservative Trading Alpaca
+│   │   ├── default.webp             # Default Alpaca
+│   │   └── moderate.webp            # Moderate Risk Alpaca
+│   ├── 🏆 icons/                    # UI Icons
+│   │   ├── bronze-medal.png         # Bronze Medal Icon
+│   │   ├── buy-signal.png           # Buy Signal Icon
+│   │   ├── gold-medal.png           # Gold Medal Icon
+│   │   ├── sell-signal.png          # Sell Signal Icon
+│   │   └── silver-medal.png         # Silver Medal Icon
+│   ├── 🎯 items/                    # Game Items
+│   │   ├── crystal-ball.png         # Prediction Item
+│   │   └── trading-terminal.png     # Trading Terminal Item
+│   ├── background.webp              # Main Background
+│   ├── favicon.webp                 # Site Favicon
+│   └── logo.webp                    # App Logo
 │
 ├── ⚙️ Configuration Files
 │   ├── hardhat.config.ts           # Hardhat Configuration
@@ -104,11 +118,13 @@ alpaca-trading-pal/
 │   ├── tsconfig.json               # TypeScript Configuration
 │   └── package.json                # Dependencies & Scripts
 │
+├── 📜 scripts/                      # Build & Deploy Scripts
+│   ├── demo.js                     # Demo Script
+│   └── deploy-all.sh               # Complete Deployment Script
+│
 └── 📖 Documentation
     ├── README.md                    # Project Overview
-    ├── STRUCTURE.md                # This File
-    ├── AI Trading Pal.txt          # Project Design Document
-    └── 0G Chain doc.txt             # 0G Chain Documentation
+    └── STRUCTURE.md                # This File
 ```
 
 ## 🔄 Data Flow Architecture
@@ -286,9 +302,10 @@ binanceClient.getAccountBalance();
 - **Hardhat**: Ethereum development environment
 
 ### **Web3 Tools**
-- **Wagmi**: React hooks for Ethereum
-- **RainbowKit**: Wallet connection UI
-- **Ethers.js**: Ethereum JavaScript library
+- **Web3Auth**: Multi-wallet authentication with social login
+- **Web3.js**: Ethereum JavaScript library
+- **MetaMask Adapter**: Direct wallet connection
+- **WalletConnect V2**: Multi-wallet protocol support
 
 ### **Development Workflow**
 ```bash

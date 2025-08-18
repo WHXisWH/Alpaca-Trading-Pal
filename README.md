@@ -64,13 +64,26 @@ cp .env.example .env.local
 Create a `.env.local` file with the following variables:
 
 ```env
-# 0G Chain Configuration
+# Web3Auth Configuration
+NEXT_PUBLIC_WEB3AUTH_CLIENT_ID=your_web3auth_client_id
+
+# Wallet Configuration  
 PRIVATE_KEY=your_private_key_here
-NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your_walletconnect_project_id
+NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID=your_walletconnect_project_id
+
+# Contract Addresses (Deployed)
+NEXT_PUBLIC_ALPACA_NFT_ADDRESS=0x2451c1c2D71eBec5f63e935670c4bb0Ce19381f5
+
+# 0G Network Configuration
+NEXT_PUBLIC_0G_RPC_URL=https://rpc.ankr.com/0g_galileo_testnet_evm
+NEXT_PUBLIC_0G_CHAIN_ID=16601
 
 # Trading APIs (Optional)
 NEXT_PUBLIC_BINANCE_API_KEY=your_binance_api_key
 BINANCE_API_SECRET=your_binance_api_secret
+
+# 0G Services
+NEXT_PUBLIC_0G_COMPUTE_KEY=your_0g_compute_key
 ```
 
 ### Run Development Server
@@ -81,7 +94,11 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) to see your Alpaca Trading Pal!
 
-### Deploy Smart Contracts
+### Smart Contract Status
+
+✅ **Contract Deployed**! Alpaca NFT Contract Address: `0x2451c1c2D71eBec5f63e935670c4bb0Ce19381f5`
+
+If you need to redeploy or deploy to other networks:
 
 ```bash
 # Compile contracts
@@ -95,13 +112,14 @@ npm run deploy
 
 ### Tech Stack
 
-- **Frontend**: Next.js 14, TypeScript, Tailwind CSS
-- **Web3**: Wagmi v2, RainbowKit, Ethers.js
+- **Frontend**: Next.js 15, TypeScript, Tailwind CSS
+- **Web3**: Web3Auth, Web3.js, MetaMask & WalletConnect Adapters
 - **Blockchain**: 0G Chain (Galileo Testnet)
 - **Smart Contracts**: Solidity 0.8.20, OpenZeppelin v5
 - **AI**: 0G Compute Network (Llama-3.3-70B, DeepSeek-R1-70B)
 - **Storage**: 0G Storage Network
 - **Trading**: Binance API Integration
+- **State Management**: Zustand
 
 ### 0G Chain Integration
 
@@ -186,14 +204,22 @@ POST /api/trading
 ## 🌐 0G Chain Network Details
 
 ### Galileo Testnet
-- **Chain ID**: 16601
+- **Chain ID**: 16601 (0x40D9)
 - **RPC URL**: https://rpc.ankr.com/0g_galileo_testnet_evm
+- **Alternative RPC**: https://evmrpc-testnet.0g.ai
 - **Explorer**: https://chainscan-galileo.0g.ai
 - **Faucet**: https://faucet.0g.ai
 
 ### Contract Addresses
+
+#### Main Contract (Deployed)
 ```
-AlpacaNFT: [Deployed after running npm run deploy]
+AlpacaNFT: 0x2451c1c2D71eBec5f63e935670c4bb0Ce19381f5
+```
+> 🎯 **Contract Ready**: Alpaca NFT smart contract has been successfully deployed to 0G Galileo Testnet and is ready for minting and trading operations.
+
+#### 0G Network Services
+```
 0G Storage Flow: 0xbD75117F80b4E22698D0Cd7612d92BDb8eaff628
 0G DA Entrance: 0xE75A073dA5bb7b0eC622170Fd268f35E675a957B
 ```
@@ -219,7 +245,8 @@ function getAlpaca(uint256 tokenId) public view returns (AlpacaTraits memory)
 - **TEE Verification**: 0G Compute Network provides trusted AI execution
 - **Decentralized Storage**: Knowledge and models stored on 0G Storage
 - **Smart Contract Security**: OpenZeppelin v5 battle-tested contracts
-- **Wallet Integration**: Secure Web3 wallet connections
+- **Multi-Wallet Support**: Web3Auth with social login + direct wallet connection
+- **Comprehensive Logging**: Detailed error tracking and debugging capabilities
 
 ## 🤝 Contributing
 
@@ -257,6 +284,31 @@ npm run type-check
 - [ ] **Mobile App**: React Native application
 - [ ] **DAO Governance**: Community-driven development
 
+## 🛠️ Troubleshooting
+
+### Common Issues
+
+#### Wallet Connection Errors
+1. **Check Console**: Open browser DevTools → Console for detailed logs
+2. **Environment Variables**: Ensure all required env vars are set
+3. **Network Configuration**: Verify 0G Chain is properly configured in your wallet
+4. **Web3Auth Setup**: Confirm Web3Auth client ID is valid
+
+#### RPC Issues
+- **Primary RPC**: `https://rpc.ankr.com/0g_galileo_testnet_evm`
+- **Backup RPC**: `https://evmrpc-testnet.0g.ai`
+- Both RPCs are currently operational and tested
+
+#### Build Errors
+```bash
+# Clear cache and reinstall
+rm -rf node_modules package-lock.json
+npm install
+
+# Check TypeScript
+npm run lint
+```
+
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
@@ -264,6 +316,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🌟 Acknowledgments
 
 - **0G Labs**: For the revolutionary modular AI blockchain
+- **Web3Auth**: For seamless multi-wallet authentication
 - **OpenZeppelin**: For secure smart contract standards
 - **Binance**: For comprehensive trading APIs
 - **Next.js Team**: For the amazing React framework
