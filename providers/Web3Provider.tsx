@@ -222,12 +222,50 @@ export function Web3Provider({ children }: Web3ProviderProps) {
       // Check if MetaMask is available
       if (typeof window !== 'undefined' && (window as any).ethereum) {
         const ethereum = (window as any).ethereum;
-        console.log("✅ MetaMask detected");
+        
+        // Check if it's actually MetaMask
+        if (ethereum.isMetaMask) {
+          console.log("✅ MetaMask detected (verified)");
+        } else {
+          console.log("⚠️ Ethereum provider detected but not verified as MetaMask");
+        }
+        
+        console.log("🔧 Provider details:", {
+          isMetaMask: ethereum.isMetaMask,
+          chainId: ethereum.chainId,
+          networkVersion: ethereum.networkVersion,
+          selectedAddress: ethereum.selectedAddress
+        });
+        
+        // Check if MetaMask is unlocked by checking if there are already accounts
+        let existingAccounts;
+        try {
+          existingAccounts = await ethereum.request({ method: 'eth_accounts' });
+          console.log("🔍 Existing accounts:", existingAccounts);
+        } catch (error) {
+          console.log("⚠️ Could not check existing accounts:", error);
+        }
+        
         console.log("🔧 Requesting account access...");
         
         // Request account access
-        const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-        console.log("📋 Accounts received:", accounts);
+        let accounts;
+        try {
+          accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+          console.log("📋 Accounts received:", accounts);
+        } catch (requestError: any) {
+          console.error("❌ eth_requestAccounts failed:", requestError);
+          console.error("Error code:", requestError.code);
+          console.error("Error message:", requestError.message);
+          
+          if (requestError.code === 4001) {
+            throw new Error("User rejected the connection request");
+          } else if (requestError.code === -32002) {
+            throw new Error("Connection request is already pending. Please check MetaMask.");
+          } else {
+            throw new Error(`MetaMask connection failed: ${requestError.message || 'Unknown error'}`);
+          }
+        }
         
         if (accounts.length > 0) {
           console.log("🔧 Checking current chain...");
