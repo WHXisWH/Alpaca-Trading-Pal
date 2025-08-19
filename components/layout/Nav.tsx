@@ -41,7 +41,7 @@ export default function Nav() {
               Leaderboard
             </Link>
             {address && (
-              <Link href={`/alpaca/${address}`} className="text-amber-700 hover:text-amber-900 font-semibold">
+              <Link href="/my-alpacas" className="text-amber-700 hover:text-amber-900 font-semibold">
                 My Alpacas
               </Link>
             )}

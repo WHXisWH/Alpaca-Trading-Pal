@@ -59,6 +59,18 @@ export function Web3Provider({ children }: Web3ProviderProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isDirectWallet, setIsDirectWallet] = useState(false);
 
+  // 钱包连接状态持久化
+  useEffect(() => {
+    // 页面加载时从localStorage恢复连接状态
+    const savedWalletType = localStorage.getItem('wallet_connection_type');
+    const savedAddress = localStorage.getItem('wallet_address');
+    
+    if (savedWalletType && savedAddress) {
+      console.log("🔄 Found saved wallet connection:", { type: savedWalletType, address: savedAddress });
+      setIsDirectWallet(savedWalletType === 'direct');
+    }
+  }, []);
+
   useEffect(() => {
     const init = async () => {
       try {
@@ -140,14 +152,21 @@ export function Web3Provider({ children }: Web3ProviderProps) {
         console.log("✅ Web3Auth modal initialized");
         setWeb3auth(web3authInstance);
 
-        if (web3authInstance.connected) {
+        // 检查是否有已保存的连接状态
+        const savedWalletType = localStorage.getItem('wallet_connection_type');
+        const savedAddress = localStorage.getItem('wallet_address');
+        
+        if (savedWalletType === 'web3auth' && web3authInstance.connected) {
           console.log("🔗 Existing Web3Auth connection found, reconnecting...");
           const web3authProvider = web3authInstance.provider;
           if (web3authProvider) {
             await handleConnection(web3authProvider);
           }
+        } else if (savedWalletType === 'direct' && savedAddress) {
+          console.log("🔗 Attempting to reconnect direct wallet...");
+          await reconnectDirectWallet();
         } else {
-          console.log("ℹ️ No existing Web3Auth connection found");
+          console.log("ℹ️ No existing connection found");
         }
       } catch (error) {
         console.error("❌ Web3Auth initialization failed:", error);
@@ -160,6 +179,98 @@ export function Web3Provider({ children }: Web3ProviderProps) {
 
     init();
   }, []);
+
+  // 直接钱包重连函数
+  const reconnectDirectWallet = async () => {
+    try {
+      if (typeof window !== 'undefined' && (window as any).ethereum) {
+        let ethereum = (window as any).ethereum;
+        
+        // 处理多个钱包提供商
+        if (ethereum.providers && ethereum.providers.length > 0) {
+          const metamaskProvider = ethereum.providers.find((provider: any) => provider.isMetaMask);
+          if (metamaskProvider) {
+            ethereum = metamaskProvider;
+          }
+        }
+        
+        // 检查现有账户（无需用户交互）
+        const accounts = await ethereum.request({ method: 'eth_accounts' });
+        
+        if (accounts.length > 0) {
+          console.log("🔗 Reconnecting to existing account:", accounts[0]);
+          
+          // 创建Web3实例
+          const web3Instance = new Web3(ethereum);
+          setWeb3(web3Instance);
+          setProvider(ethereum);
+          setAddress(accounts[0]);
+          setIsConnected(true);
+          setIsDirectWallet(true);
+          
+          // 更新localStorage
+          localStorage.setItem('wallet_connection_type', 'direct');
+          localStorage.setItem('wallet_address', accounts[0]);
+          
+          console.log("✅ Direct wallet reconnected successfully");
+          
+          // 设置事件监听器
+          setupWalletEventListeners(ethereum);
+        } else {
+          console.log("ℹ️ No accounts available for reconnection");
+          // 清除过期的存储状态
+          localStorage.removeItem('wallet_connection_type');
+          localStorage.removeItem('wallet_address');
+        }
+      }
+    } catch (error) {
+      console.error("❌ Direct wallet reconnection failed:", error);
+      // 清除过期的存储状态
+      localStorage.removeItem('wallet_connection_type');
+      localStorage.removeItem('wallet_address');
+    }
+  };
+
+  // 设置钱包事件监听器
+  const setupWalletEventListeners = (ethereum: any) => {
+    // 监听账户变化
+    ethereum.on('accountsChanged', (accounts: string[]) => {
+      console.log("🔄 Accounts changed:", accounts);
+      if (accounts.length === 0) {
+        // 用户断开了连接
+        handleWalletDisconnect();
+      } else {
+        // 用户切换了账户
+        setAddress(accounts[0]);
+        localStorage.setItem('wallet_address', accounts[0]);
+        console.log("✅ Account switched to:", accounts[0]);
+      }
+    });
+
+    // 监听链变化
+    ethereum.on('chainChanged', (chainId: string) => {
+      console.log("🔄 Chain changed:", chainId);
+      // 可以在这里添加链切换的处理逻辑
+    });
+
+    // 监听连接断开
+    ethereum.on('disconnect', (error: any) => {
+      console.log("🔌 Wallet disconnected:", error);
+      handleWalletDisconnect();
+    });
+  };
+
+  // 处理钱包断开连接
+  const handleWalletDisconnect = () => {
+    setProvider(null);
+    setWeb3(null);
+    setAddress(null);
+    setIsConnected(false);
+    setIsDirectWallet(false);
+    localStorage.removeItem('wallet_connection_type');
+    localStorage.removeItem('wallet_address');
+    console.log("🔌 Wallet disconnected and state cleared");
+  };
 
   const handleConnection = async (web3authProvider: IProvider) => {
     try {
@@ -175,6 +286,9 @@ export function Web3Provider({ children }: Web3ProviderProps) {
       if (accounts.length > 0) {
         setAddress(accounts[0]);
         setIsConnected(true);
+        // 保存Web3Auth连接状态
+        localStorage.setItem('wallet_connection_type', 'web3auth');
+        localStorage.setItem('wallet_address', accounts[0]);
         console.log("✅ Wallet connected successfully:", accounts[0]);
       } else {
         console.warn("⚠️ No accounts found in wallet");
@@ -340,7 +454,13 @@ export function Web3Provider({ children }: Web3ProviderProps) {
           setAddress(accounts[0]);
           setIsConnected(true);
           setIsDirectWallet(true);
+          // 保存直接钱包连接状态
+          localStorage.setItem('wallet_connection_type', 'direct');
+          localStorage.setItem('wallet_address', accounts[0]);
           console.log("✅ Direct wallet connection successful:", accounts[0]);
+          
+          // 设置事件监听器
+          setupWalletEventListeners(ethereum);
         } else {
           console.warn("⚠️ No accounts returned from wallet");
         }
@@ -364,11 +484,7 @@ export function Web3Provider({ children }: Web3ProviderProps) {
       
       if (isDirectWallet) {
         // For direct wallet connections, just clear state
-        setProvider(null);
-        setWeb3(null);
-        setAddress(null);
-        setIsConnected(false);
-        setIsDirectWallet(false);
+        handleWalletDisconnect();
       } else if (web3auth) {
         // For Web3Auth connections, use proper logout
         await web3auth.logout();
@@ -376,6 +492,9 @@ export function Web3Provider({ children }: Web3ProviderProps) {
         setWeb3(null);
         setAddress(null);
         setIsConnected(false);
+        // 清除存储状态
+        localStorage.removeItem('wallet_connection_type');
+        localStorage.removeItem('wallet_address');
       } else {
         console.error("No connection method available for logout");
       }
