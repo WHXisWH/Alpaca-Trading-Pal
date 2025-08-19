@@ -157,7 +157,7 @@ export default function MyAlpacasPage() {
           <p className="text-amber-700 mb-6">Connect your wallet to view your trading companions</p>
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-6 max-w-md mx-auto">
             <p className="text-amber-800 text-sm">
-              🔗 Use the "Connect Wallet" button in the navigation to get started
+              🔗 Use the &quot;Connect Wallet&quot; button in the navigation to get started
             </p>
           </div>
         </div>
@@ -234,7 +234,7 @@ export default function MyAlpacasPage() {
           </p>
           
           <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-2xl p-8 mb-8">
-            <h3 className="text-2xl font-bold text-amber-900 mb-4">What you'll get:</h3>
+            <h3 className="text-2xl font-bold text-amber-900 mb-4">What you&apos;ll get:</h3>
             <div className="grid md:grid-cols-3 gap-4 text-left">
               <div className="bg-white p-4 rounded-lg border border-amber-100">
                 <div className="text-2xl mb-2">🧠</div>
