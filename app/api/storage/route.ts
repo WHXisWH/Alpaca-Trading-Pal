@@ -1,53 +1,52 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { zgStorage } from '@/lib/0g/storage';
+import { zgStorageServer } from '@/lib/0g/storage-server';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { action, data, tokenId, uri } = body;
+    const { action, data, tokenId, storageUrl, trainingDatasets, modelWeights, modelConfig } = body;
 
     switch (action) {
       case 'uploadKnowledge':
-        const uploadResult = await zgStorage.uploadKnowledge({
+        const uploadResult = await zgStorageServer.uploadKnowledge({
           type: data.type || "knowledge",
           content: data.content,
-          tokenId,
+          tokenId: data.tokenId,
           metadata: data.metadata
         });
         
-        return NextResponse.json({
-          success: true,
-          txHash: uploadResult.txHash,
-          storageRoot: uploadResult.root,
-          url: uploadResult.url,
-          message: "Knowledge uploaded to 0G Storage"
-        });
+        return NextResponse.json(uploadResult);
 
-      case 'downloadData':
-        const downloadResult = await zgStorage.downloadFromStorage(uri);
-        return NextResponse.json({
-          success: true,
-          data: downloadResult,
-          message: "Data retrieved from 0G Storage"
-        });
+      case 'downloadFromStorage':
+        const downloadResult = await zgStorageServer.downloadFromStorage(storageUrl);
+        return NextResponse.json(downloadResult);
+
+      case 'uploadBulkTrainingData':
+        const bulkResult = await zgStorageServer.uploadBulkTrainingData(tokenId, trainingDatasets);
+        return NextResponse.json(bulkResult);
+
+      case 'uploadAIModelWeights':
+        const weightsBuffer = Buffer.from(modelWeights, 'base64').buffer;
+        const weightsResult = await zgStorageServer.uploadAIModelWeights(tokenId, weightsBuffer, modelConfig);
+        return NextResponse.json(weightsResult);
 
       case 'uploadModel':
-        const modelResult = await zgStorage.uploadModelMetadata(tokenId, data);
-        return NextResponse.json({
-          success: true,
-          txHash: modelResult.txHash,
-          url: modelResult.url,
-          message: "Model metadata uploaded to 0G Storage"
+        const modelResult = await zgStorageServer.uploadKnowledge({
+          type: "model",
+          content: JSON.stringify(data),
+          tokenId,
+          metadata: { modelName: data.name, architecture: data.architecture }
         });
+        return NextResponse.json(modelResult);
 
       case 'uploadPerformance':
-        const perfResult = await zgStorage.uploadPerformanceData(tokenId, data);
-        return NextResponse.json({
-          success: true,
-          txHash: perfResult.txHash,
-          url: perfResult.url,
-          message: "Performance data uploaded to 0G Storage"
+        const perfResult = await zgStorageServer.uploadKnowledge({
+          type: "performance",
+          content: JSON.stringify(data),
+          tokenId,
+          metadata: { tradesCount: data.trades?.length || 0, period: "30d" }
         });
+        return NextResponse.json(perfResult);
 
       default:
         return NextResponse.json(
@@ -73,7 +72,7 @@ export async function GET(request: NextRequest) {
 
   if (uri) {
     try {
-      const data = await zgStorage.downloadFromStorage(uri);
+      const data = await zgStorageServer.downloadFromStorage(uri);
       return NextResponse.json({
         success: true,
         data,
@@ -88,17 +87,26 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.json({ 
-    message: "0G Storage API",
+    message: "Enhanced 0G Storage API with Real SDK",
     endpoints: {
       POST: "Upload data to 0G Storage",
       GET: "Retrieve data from 0G Storage (with ?uri=<storage_uri>)",
       actions: [
         "uploadKnowledge - Store Alpaca knowledge",
-        "uploadModel - Store AI model metadata",
+        "uploadModel - Store AI model metadata", 
         "uploadPerformance - Store trading performance data",
-        "downloadData - Retrieve stored data"
+        "uploadBulkTrainingData - Store training datasets",
+        "uploadAIModelWeights - Store AI model weights",
+        "downloadFromStorage - Retrieve stored data"
       ]
     },
-    status: "Ready"
+    features: [
+      "Real 0G Storage SDK integration",
+      "Fallback simulation mode",
+      "Binary data support (AI model weights)",
+      "Bulk operations",
+      "Merkle tree verification"
+    ],
+    status: "Enhanced & Ready"
   });
 }

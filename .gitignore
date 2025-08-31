@@ -177,3 +177,6 @@ secrets/
 # Backup files
 *.backup
 *.bak
+
+# Project documentation
+CHANGELOG.md
