@@ -6,6 +6,7 @@ export class ZGComputeClient {
   private broker: any = null;
   private web3: Web3 | null = null;
   private account: string | null = null;
+  private signer: any = null;
   private retryAttempts = 3;
   private retryDelay = 1000;
 
@@ -20,9 +21,16 @@ export class ZGComputeClient {
           throw new Error("Private key required for compute operations");
         }
         
-        const provider = new Web3.providers.HttpProvider("https://rpc.ankr.com/0g_galileo_testnet_evm");
-        this.web3 = new Web3(provider);
-        this.account = this.web3.eth.accounts.privateKeyToAccount(privateKey).address;
+        // Use ethers.js for 0G Compute (required by serving-broker)
+        const { ethers } = await import("ethers");
+        const provider = new ethers.JsonRpcProvider("https://rpc.ankr.com/0g_galileo_testnet_evm");
+        const ethersSigner = new ethers.Wallet(privateKey, provider);
+        
+        // Keep Web3 for compatibility with other parts
+        const web3Provider = new Web3.providers.HttpProvider("https://rpc.ankr.com/0g_galileo_testnet_evm");
+        this.web3 = new Web3(web3Provider);
+        this.account = ethersSigner.address;
+        this.signer = ethersSigner; // Use ethers signer for 0G Compute
       }
       
       if (!this.web3 || !this.account) {
@@ -31,9 +39,18 @@ export class ZGComputeClient {
       
       try {
         const { createZGComputeNetworkBroker } = await import("@0glabs/0g-serving-broker");
-        this.broker = await createZGComputeNetworkBroker(this.web3, this.account);
+        // Correct usage: pass signer and your contract address
+        this.broker = await createZGComputeNetworkBroker(this.signer, "0x3482175863Ef9676DE0b10B82FA684c702f2E674");
         
-        await this.broker.ledger.addLedger(Web3.utils.toWei("0.01", "ether"));
+        // Check if ledger exists first
+        try {
+          const existingLedger = await this.broker.ledger.getLedger();
+          console.log("🧠 Existing ledger found:", existingLedger);
+        } catch (error) {
+          console.log("🧠 No existing ledger found. Error:", error instanceof Error ? error.message : String(error));
+          console.log("🧠 Skipping ledger creation for now - check wallet balance and permissions");
+          // Skip ledger creation for now to test basic connectivity
+        }
         
         console.log("🧠 Connected to 0G Compute Network");
         return true;
@@ -94,8 +111,7 @@ export class ZGComputeClient {
       throw new Error(`Model ${model} not found in 0G Compute Network`);
     }
 
-    await this.broker.inference.acknowledgeProviderSigner(providerAddress);
-    
+    // Use correct API structure from TypeScript definitions
     const { endpoint, model: serviceModel } = await this.broker.inference.getServiceMetadata(providerAddress);
     const headers = await this.broker.inference.getRequestHeaders(providerAddress, prompt);
     

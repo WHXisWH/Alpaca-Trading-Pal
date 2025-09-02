@@ -2,7 +2,7 @@ import { StorageUploadResult, ZGStorageConfig } from "@/types/0g";
 
 const DEFAULT_CONFIG: ZGStorageConfig = {
   endpoint: "https://rpc-testnet.0g.ai",
-  indexerEndpoint: "https://indexer-testnet.0g.ai",
+  indexerEndpoint: "https://indexer-storage-testnet-standard.0g.ai", 
   evmRpc: "https://rpc.ankr.com/0g_galileo_testnet_evm",
   privateKey: process.env.PRIVATE_KEY || "",
 };
@@ -25,18 +25,16 @@ export class ZGStorageServerClient {
         throw new Error("Private key required for 0G Storage operations");
       }
 
-      const { Indexer, getFlowContract, ZgFile } = await import("@0glabs/0g-ts-sdk");
+      const { Indexer, MemData } = await import("@0glabs/0g-ts-sdk");
       const { ethers } = await import("ethers");
       
       const provider = new ethers.JsonRpcProvider(this.config.evmRpc);
       const wallet = new ethers.Wallet(this.config.privateKey, provider);
       const indexer = new Indexer(this.config.indexerEndpoint);
-      const flowContract = getFlowContract("0xbD75117F80b4E22698D0Cd7612d92BDb8eaff628", wallet as any);
       
       (this as any).wallet = wallet;
       (this as any).indexer = indexer;
-      (this as any).flowContract = flowContract;
-      (this as any).ZgFile = ZgFile;
+      (this as any).MemData = MemData;
       
       this.sdkAvailable = true;
       console.log("📦 Server: Initialized 0G Storage Client");
@@ -82,35 +80,36 @@ export class ZGStorageServerClient {
 
   private async uploadToRealStorage(content: string, data: any): Promise<StorageUploadResult> {
     const buffer = Buffer.from(content, 'utf-8');
-    const ZgFile = (this as any).ZgFile;
-    const flowContract = (this as any).flowContract;
+    const MemData = (this as any).MemData;
+    const wallet = (this as any).wallet;
     const indexer = (this as any).indexer;
     
-    const file = new ZgFile(buffer);
+    const file = new MemData(buffer);
     
-    const [tree, err] = await file.merkleTree();
+    // Use official method: indexer.upload() handles flow contract automatically
+    const [tx, err] = await indexer.upload(file, this.config.evmRpc, wallet);
+    
     if (err) {
-      throw new Error(`Failed to create merkle tree: ${err}`);
+      throw new Error(`Failed to upload to 0G Storage: ${err}`);
+    }
+    
+    // Get merkle tree for root hash
+    const [tree, treeErr] = await file.merkleTree();
+    if (treeErr) {
+      throw new Error(`Failed to create merkle tree: ${treeErr}`);
     }
 
-    const submission = await flowContract.submit(tree.root());
-    await submission.wait();
-
-    const segments = await file.split(flowContract.segmentSize());
-    const batchUpload = indexer.upload(segments);
-    
-    await batchUpload;
-
     const result: StorageUploadResult = {
-      txHash: submission.hash,
-      root: tree.root(),
-      url: `${this.config.indexerEndpoint}/download/${tree.root()}`
+      txHash: tx,
+      root: tree.rootHash(),
+      url: `${this.config.indexerEndpoint}/download/${tree.rootHash()}`
     };
 
     console.log(`📦 Server: Uploaded to 0G Storage:`, {
       type: data.type,
       size: buffer.length,
-      root: result.root.slice(0, 10) + '...'
+      root: result.root.slice(0, 10) + '...',
+      txHash: tx.slice(0, 10) + '...'
     });
 
     return result;

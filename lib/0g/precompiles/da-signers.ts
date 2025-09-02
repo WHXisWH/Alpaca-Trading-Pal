@@ -1,7 +1,7 @@
 import Web3 from "web3";
 import { AbiItem } from "web3-utils";
 
-const DA_SIGNERS_ADDRESS = "0x0000000000000000000000000000000000001000";
+const DA_SIGNERS_ADDRESS = process.env.NEXT_PUBLIC_0G_DA_SIGNERS || "0x0000000000000000000000000000000000001000";
 
 interface SignerDetail {
   signer: string;

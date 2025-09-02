@@ -1,7 +1,7 @@
 import Web3 from "web3";
 import { AbiItem } from "web3-utils";
 
-const WRAPPED_OG_ADDRESS = "0x0000000000000000000000000000000000001002";
+const WRAPPED_OG_ADDRESS = process.env.NEXT_PUBLIC_0G_WRAPPED_OG || "0x0000000000000000000000000000000000001002";
 
 interface MinterSupply {
   cap: bigint;
