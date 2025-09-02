@@ -224,7 +224,7 @@ contract AlpacaNFTOptimized is ERC721, ERC721URIStorage, Ownable, ReentrancyGuar
     function _createAlpaca(uint256 tokenId, string memory _name, address owner) private {
         uint256 seed = uint256(keccak256(abi.encodePacked(
             block.timestamp, 
-            block.difficulty, 
+            block.prevrandao,
             owner, 
             tokenId,
             _batchNonce++
