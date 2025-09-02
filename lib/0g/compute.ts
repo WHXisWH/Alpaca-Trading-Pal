@@ -106,19 +106,52 @@ export class ZGComputeClient {
   }
 
   private async runRealInference(prompt: string, model: string = "llama-3.3-70b-instruct"): Promise<ComputeResponse> {
-    // Use SDK's auto-discovery to find available services
+    // Step 1: Use SDK's auto-discovery to find available services
     const services = await this.broker.inference.listService();
-    console.log("🔍 Available services discovered:", services);
+    console.log("🔍 Step 1 - Available services discovered:", services.length, "services");
     
     if (!services || services.length === 0) {
       throw new Error("No services found in 0G Compute Network");
     }
 
-    // Use the first available service for now
-    const service = services[0];
-    const { endpoint, model: serviceModel } = await this.broker.inference.getServiceMetadata(service.provider);
-    const headers = await this.broker.inference.getRequestHeaders(service.provider, prompt);
+    // Try each service until one works - following the 6-step official process
+    let lastError: Error | null = null;
+    for (let i = 0; i < services.length; i++) {
+      const service = services[i];
+      console.log(`🔄 Trying service ${i + 1}/${services.length}: ${service.provider}`);
+      
+      try {
+        // Step 2: CRITICAL - Acknowledge provider signer (this was missing!)
+        console.log("Step 2 - Acknowledging provider signer...");
+        await this.broker.inference.acknowledgeProviderSigner(service.provider);
+        console.log("✅ Step 2 - Provider signer acknowledged:", service.provider);
+        
+        // Step 3: Get service metadata
+        console.log("Step 3 - Getting service metadata...");
+        const { endpoint, model: serviceModel } = await this.broker.inference.getServiceMetadata(service.provider);
+        console.log("✅ Step 3 - Service metadata retrieved");
+        
+        // Step 4: Get request headers (now this should work)
+        console.log("Step 4 - Getting request headers...");
+        const headers = await this.broker.inference.getRequestHeaders(service.provider, prompt);
+        console.log("✅ Step 4 - Request headers obtained");
+        
+        // Step 5 & 6: Call endpoint and process response
+        return await this.callServiceEndpoint(service, endpoint, serviceModel, headers, prompt, model);
+        
+      } catch (error) {
+        console.log(`❌ Service ${i + 1} failed at some step:`, error instanceof Error ? error.message : String(error));
+        lastError = error instanceof Error ? error : new Error(String(error));
+        continue; // Try next service
+      }
+    }
     
+    throw lastError || new Error("All services failed during the 6-step process");
+  }
+  
+  private async callServiceEndpoint(service: any, endpoint: string, serviceModel: string, headers: any, prompt: string, requestedModel: string): Promise<ComputeResponse> {
+    // Step 5: Make the actual API call to the service endpoint
+    console.log("Step 5 - Calling service endpoint...");
     const requestBody = {
       messages: [{ role: "user", content: prompt }],
       model: serviceModel,
@@ -149,14 +182,18 @@ export class ZGComputeClient {
     
     const result = data.choices[0].message.content;
     const chatId = data.id;
+    console.log("✅ Step 5 - Service endpoint responded successfully");
     
+    // Step 6: Process the response through the broker for verification
+    console.log("Step 6 - Processing response through broker...");
     const valid = await this.broker.inference.processResponse(
       service.provider,
       result,
       chatId
     );
+    console.log("✅ Step 6 - Response processed and verified");
     
-    console.log(`🧠 Generated strategy via 0G Compute (${model})`);
+    console.log(`🧠 Generated strategy via 0G Compute (${requestedModel}) - All 6 steps completed!`);
     
     return {
       result,
