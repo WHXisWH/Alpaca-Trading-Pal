@@ -1,6 +1,6 @@
 import Web3 from "web3";
 import { ComputeResponse } from "@/types/0g";
-import { ZG_SERVICES } from "./chain";
+// Using SDK auto-discovery instead of hardcoded addresses
 
 export class ZGComputeClient {
   private broker: any = null;
@@ -39,8 +39,9 @@ export class ZGComputeClient {
       
       try {
         const { createZGComputeNetworkBroker } = await import("@0glabs/0g-serving-broker");
-        // Correct usage: pass signer and your contract address
-        this.broker = await createZGComputeNetworkBroker(this.signer, "0x3482175863Ef9676DE0b10B82FA684c702f2E674");
+        // Use SDK auto-discovery (official method)
+        // @ts-ignore - SDK supports single parameter for auto-discovery
+        this.broker = await createZGComputeNetworkBroker(this.signer);
         
         // Check if ledger exists first
         try {
@@ -105,15 +106,18 @@ export class ZGComputeClient {
   }
 
   private async runRealInference(prompt: string, model: string = "llama-3.3-70b-instruct"): Promise<ComputeResponse> {
-    const providerAddress = ZG_SERVICES.COMPUTE_PROVIDERS[model as keyof typeof ZG_SERVICES.COMPUTE_PROVIDERS];
+    // Use SDK's auto-discovery to find available services
+    const services = await this.broker.inference.listService();
+    console.log("🔍 Available services discovered:", services);
     
-    if (!providerAddress) {
-      throw new Error(`Model ${model} not found in 0G Compute Network`);
+    if (!services || services.length === 0) {
+      throw new Error("No services found in 0G Compute Network");
     }
 
-    // Use correct API structure from TypeScript definitions
-    const { endpoint, model: serviceModel } = await this.broker.inference.getServiceMetadata(providerAddress);
-    const headers = await this.broker.inference.getRequestHeaders(providerAddress, prompt);
+    // Use the first available service for now
+    const service = services[0];
+    const { endpoint, model: serviceModel } = await this.broker.inference.getServiceMetadata(service.provider);
+    const headers = await this.broker.inference.getRequestHeaders(service.provider, prompt);
     
     const requestBody = {
       messages: [{ role: "user", content: prompt }],
@@ -147,7 +151,7 @@ export class ZGComputeClient {
     const chatId = data.id;
     
     const valid = await this.broker.inference.processResponse(
-      providerAddress,
+      service.provider,
       result,
       chatId
     );

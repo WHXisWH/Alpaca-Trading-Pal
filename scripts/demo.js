@@ -32,8 +32,7 @@ async function runDemo() {
   console.log(chalk.yellow('\n🎯 0G Integration Points:'));
   console.log(chalk.white(`- Storage Flow: 0xbD75117F80b4E22698D0Cd7612d92BDb8eaff628`));
   console.log(chalk.white(`- DA Entrance: 0xE75A073dA5bb7b0eC622170Fd268f35E675a957B`));
-  console.log(chalk.white(`- Compute (Llama): 0xf07240Efa67755B5311bc75784a061eDB47165Dd`));
-  console.log(chalk.white(`- Compute (DeepSeek): 0x3feE5a4dd5FDb8a32dDA97Bed899830605dBD9D3`));
+  console.log(chalk.white(`- Compute Services: Auto-discovered via 0G SDK`));
   
   if (DEMO_CONFIG.contractAddress) {
     console.log(chalk.green(`\n✅ AlpacaNFT Contract: ${DEMO_CONFIG.contractAddress}`));

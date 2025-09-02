@@ -25,12 +25,8 @@ export const ZG_CONTRACTS = {
   WRAPPED_OG: process.env.NEXT_PUBLIC_0G_WRAPPED_OG || "0x0000000000000000000000000000000000001002",
 };
 
-export const ZG_SERVICES = {
-  COMPUTE_PROVIDERS: {
-    "llama-3.3-70b-instruct": process.env.NEXT_PUBLIC_0G_COMPUTE_LLAMA || "0xf07240Efa67755B5311bc75784a061eDB47165Dd",
-    "deepseek-r1-70b": process.env.NEXT_PUBLIC_0G_COMPUTE_DEEPSEEK || "0x3feE5a4dd5FDb8a32dDA97Bed899830605dBD9D3"
-  }
-};
+// Note: Compute provider addresses are auto-discovered by 0G SDK
+// No hardcoded addresses needed - SDK handles service discovery
 
 export function getZGNetworkConfig() {
   return ZG_TESTNET_CONFIG;
