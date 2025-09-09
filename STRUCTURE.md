@@ -21,9 +21,12 @@ alpaca-trading-pal/
 │
 ├── 🧩 components/                   # React Components
 │   ├── 🦙 alpaca/                   # Alpaca-specific Components
-│   │   ├── AlpacaCard.tsx           # Alpaca Display Card
+│   │   ├── AchievementsPanel.tsx    # Achievement Display & Progress
+│   │   ├── AlpacaCard.tsx           # Alpaca Display Card (Evolution Stages)
+│   │   ├── InventoryPanel.tsx       # Equipment & Items Management
 │   │   ├── KnowledgeFeed.tsx        # Knowledge Input Interface
 │   │   ├── PerformanceChart.tsx     # Trading Performance Visualization
+│   │   ├── QuestsPanel.tsx          # Daily Quests Interface
 │   │   ├── StatsPanel.tsx           # Statistics Display
 │   │   └── TradingPanel.tsx         # Trading Controls
 │   ├── 🎨 layout/                   # Layout Components
@@ -42,14 +45,19 @@ alpaca-trading-pal/
 │   │   ├── MintCard.tsx             # Minting Interface
 │   │   └── TraitSelector.tsx        # Trait Selection (Read-only)
 │   └── 🔧 ui/                       # Reusable UI Components
+│       ├── AlpacaCardSkeleton.tsx   # Loading Skeleton for Alpaca Card
 │       ├── Button.tsx               # Styled Button Component
 │       ├── Card.tsx                 # Card Container
+│       ├── ErrorBoundary.tsx        # React Error Boundary Component
 │       ├── Input.tsx                # Form Input
 │       ├── Modal.tsx                # Modal Dialog
+│       ├── QuestsPanelSkeleton.tsx  # Loading Skeleton for Quests
+│       ├── Skeleton.tsx             # Base Skeleton Component
 │       └── Toast.tsx                # Notification Toast
 │
 ├── 📜 contracts/                    # Smart Contracts
-│   ├── AlpacaNFTOptimized.sol      # v0.3.0 Optimized Contract (Gas Efficient)
+│   ├── AlpacaNFTOptimized.sol      # v0.5 Living Alpaca Contract (Evolution & Equipment)
+│   ├── AlpacaItems.sol             # ERC1155 Equipment & Items Contract
 │   ├── AlpacaNFT.sol               # Legacy NFT Contract
 │   ├── 🚀 deploy/                   # Deployment Scripts
 │   │   └── 01-deploy-alpaca.ts      # Alpaca NFT Deployment
@@ -57,10 +65,12 @@ alpaca-trading-pal/
 │       └── IAlpacaNFT.sol           # NFT Interface Definition
 │
 ├── 🎣 hooks/                        # React Hooks
-│   ├── useAlpaca.ts                # Alpaca Data Management
+│   ├── useAlpaca.ts                # Alpaca Data Management (with Mood Calculation)
 │   ├── useAutoTrading.ts           # Automated Trading Logic
-│   ├── useContract.ts              # Smart Contract Interactions
+│   ├── useContract.ts              # Smart Contract Interactions (Equipment Functions)
+│   ├── useItems.ts                 # ERC1155 Items Management
 │   ├── useKnowledge.ts             # Knowledge Management
+│   ├── useQuests.ts                # Daily Quests & Achievement System
 │   ├── useStorage.ts               # 0G Storage Operations
 │   └── useTrading.ts               # Trading Logic
 │
@@ -88,6 +98,7 @@ alpaca-trading-pal/
 │       └── format.ts                # Formatting Helpers
 │
 ├── 🌐 providers/                    # React Context Providers
+│   ├── QuestProvider.tsx           # Quest Tracking Context Provider
 │   └── Web3Provider.tsx            # Web3 & Wallet Provider
 │
 ├── 🗄️ store/                        # State Management
@@ -97,7 +108,8 @@ alpaca-trading-pal/
 ├── 🏷️ types/                        # TypeScript Definitions
 │   ├── 0g-serving-broker.d.ts      # 0G Serving Broker Types
 │   ├── 0g.d.ts                     # 0G Chain Types
-│   ├── alpaca.ts                   # Alpaca & NFT Types
+│   ├── alpaca.ts                   # Alpaca & NFT Types (with Evolution & Equipment)
+│   ├── quests.ts                   # Quest & Achievement System Types
 │   └── trading.ts                  # Trading Types
 │
 ├── 🎨 public/                       # Static Assets
@@ -131,11 +143,16 @@ alpaca-trading-pal/
 │   └── deploy-all.sh               # Complete Deployment Script
 │
 └── 📖 Documentation
-    ├── README.md                    # Project Overview
+    ├── README.md                    # Project Overview (v0.5 Living Alpaca)
     ├── STRUCTURE.md                # This File
     ├── UPDATE_NOTES_V0.3.0.txt     # v0.3.0 Technical Update Notes
     ├── MILESTONES_3RD_4TH_WAVE.txt # Future Development Roadmap
     └── CHANGELOG.md                # Version History (gitignored)
+    
+    📝 Development Files (gitignored):
+    ├── upgrade_progress.md          # Implementation Progress Tracking
+    ├── upgrade_summary.md           # v0.5 Feature Planning Document
+    └── build_failures_summary.md   # Development Issues & Solutions
 ```
 
 ## 🔄 Data Flow Architecture
@@ -145,19 +162,29 @@ alpaca-trading-pal/
 User → Frontend Components → React Hooks → API Routes → 0G Chain Services
 ```
 
-### 2. **NFT Lifecycle**
+### 2. **NFT Lifecycle (v0.5 Living Alpaca)**
 ```
-Mint → Store Metadata (0G Storage) → Train AI (0G Compute) → Trade → Update Performance
+Mint → Store Metadata (0G Storage) → Train AI (0G Compute) → Trade → Level Up → Evolve Stages
 ```
 
-### 3. **AI Strategy Generation**
+### 3. **Quest & Achievement System**
+```
+User Actions → Quest Tracking → Progress Update → Reward Distribution → Achievement Unlock
+```
+
+### 4. **Equipment System Flow**
+```
+Earn Items → Equip/Unequip → Boost Performance → Trade Better → Gain More Experience
+```
+
+### 5. **AI Strategy Generation**
 ```
 Market Data → 0G Compute Network → LLM Processing → Trading Strategy → Execution
 ```
 
-### 4. **Trading Execution**
+### 6. **Mood System Flow**
 ```
-AI Strategy → Trading API → Binance Integration → Order Execution → Performance Tracking
+Trading Results → Performance Analysis → Mood Calculation → Visual Update → User Feedback
 ```
 
 ## 🧩 Component Architecture
@@ -334,10 +361,13 @@ npm run deploy     # Smart contract deployment
 
 ## 📈 Performance Optimizations
 
-### **Frontend Optimizations**
-- **Code Splitting**: Dynamic imports for large components
-- **Image Optimization**: Next.js Image component
-- **Caching**: API response caching with React Query
+### **Frontend Optimizations (v0.5 Enhanced)**
+- **React.memo**: Optimized component re-rendering for AlpacaCard, QuestsPanel, AchievementsPanel
+- **Loading Skeletons**: Professional loading states with AlpacaCardSkeleton, QuestsPanelSkeleton
+- **Image Optimization**: Next.js Image component with priority loading
+- **Error Boundaries**: Comprehensive ErrorBoundary components for fault tolerance
+- **Mobile Optimization**: Touch-friendly interfaces with improved tap targets
+- **Animation Performance**: Smooth 300-700ms transitions with hardware acceleration
 
 ### **Blockchain Optimizations (v0.3.0 Enhanced)**
 - **AI-Driven Gas Optimization**: Machine learning price prediction with multi-strategy selection

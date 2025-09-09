@@ -3,6 +3,7 @@ import { useWeb3 } from "@/providers/Web3Provider";
 import { ALPACA_NFT_ABI } from "@/lib/contracts/abi";
 import { CONTRACT_ADDRESSES } from "@/lib/contracts/addresses";
 import { MintAlpacaParams, FeedKnowledgeParams, RecordTradeParams } from "@/types/alpaca";
+import { ethers } from "ethers";
 import Web3 from "web3";
 
 export function useAlpacaContract() {
@@ -90,11 +91,39 @@ export function useAlpacaContract() {
     }
   };
 
+  const equipItem = async (tokenId: string, itemId: number) => {
+    if (!address) throw new Error("Wallet not connected");
+    
+    setIsLoading(true);
+    try {
+      const contract = getContract();
+      const result = await contract.methods.equipItem(tokenId, itemId).send({ from: address });
+      return result;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const unequipItem = async (tokenId: string) => {
+    if (!address) throw new Error("Wallet not connected");
+    
+    setIsLoading(true);
+    try {
+      const contract = getContract();
+      const result = await contract.methods.unequipItem(tokenId).send({ from: address });
+      return result;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return {
     mintAlpaca,
     feedKnowledge,
     updateModelURI,
     recordTrade,
+    equipItem,
+    unequipItem,
     isLoading,
   };
 }

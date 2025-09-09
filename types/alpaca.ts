@@ -5,6 +5,8 @@ export interface AlpacaTraits {
   preferredMarket: number;
   level: bigint;
   experience: bigint;
+  evolutionStage: bigint;
+  equipmentId: bigint;
   modelURI: string;
   performanceURI: string;
   totalTrades: bigint;
@@ -20,6 +22,9 @@ export interface AlpacaDisplayTraits {
   preferredMarket: number;
   level: number;
   experience: number;
+  evolutionStage: number;
+  equipmentId: number;
+  mood: string;
   modelURI: string;
   performanceURI: string;
   totalTrades: number;

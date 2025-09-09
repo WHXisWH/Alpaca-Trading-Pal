@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useAlpacaContract } from "@/hooks/useContract";
 import { useKnowledge } from "@/hooks/useKnowledge";
+import { useQuestTracking } from "@/providers/QuestProvider";
 
 interface KnowledgeFeedProps {
   tokenId: string;
@@ -21,6 +22,7 @@ export default function KnowledgeFeed({ tokenId }: KnowledgeFeedProps) {
   const [isFeeding, setIsFeeding] = useState(false);
   const { feedKnowledge } = useAlpacaContract();
   const { addKnowledge, knowledgeItems, loadKnowledge } = useKnowledge(tokenId);
+  const { trackAction } = useQuestTracking();
 
   // Load existing knowledge when component mounts
   useEffect(() => {
@@ -37,6 +39,9 @@ export default function KnowledgeFeed({ tokenId }: KnowledgeFeedProps) {
       
       // Record to smart contract
       await feedKnowledge({ tokenId, knowledge: knowledgeItem.storageUrl });
+      
+      // Track quest progress
+      trackAction('feed_alpaca');
       
       setKnowledge("");
       

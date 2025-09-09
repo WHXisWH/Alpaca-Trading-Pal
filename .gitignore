@@ -180,3 +180,8 @@ secrets/
 
 # Project documentation
 CHANGELOG.md
+
+# Development progress files
+upgrade_progress.md
+upgrade_summary.md
+build_failures_summary.md
