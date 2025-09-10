@@ -23,12 +23,38 @@ export function useUserAlpacas(address: string | null) {
         CONTRACT_ADDRESSES.ALPACA_NFT
       );
       
+      console.log("Contract address:", CONTRACT_ADDRESSES.ALPACA_NFT);
+      console.log("User address:", address);
+      
+      // Check if user has any tokens first
+      console.log("Calling balanceOf...");
+      const balance = await contract.methods.balanceOf(address).call();
+      console.log(`User balance: ${balance} tokens`);
+      
+      if (balance === '0' || balance === 0) {
+        setTokenIds([]);
+        console.log(`No Alpacas found for user ${address}`);
+        return;
+      }
+      
+      console.log("Calling getAllTokensByOwner...");
       const tokens = await contract.methods.getAllTokensByOwner(address).call();
       setTokenIds(tokens.map((id: any) => id.toString()));
       
       console.log(`Found ${tokens.length} Alpacas for user ${address}`);
     } catch (err) {
       console.error("Failed to fetch user tokens:", err);
+      
+      // Handle RPC node sync issues gracefully
+      if (err && typeof err === 'object' && 'message' in err) {
+        const message = (err as any).message;
+        if (message.includes('missing trie node') || message.includes('state is not available')) {
+          console.log("RPC node sync issue detected, showing empty state");
+          setTokenIds([]);
+          return;
+        }
+      }
+      
       setError(err as Error);
     } finally {
       setIsLoading(false);

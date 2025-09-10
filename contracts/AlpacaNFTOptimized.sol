@@ -279,6 +279,45 @@ contract AlpacaNFTOptimized is ERC721, ERC721URIStorage, Ownable, ReentrancyGuar
         return super.supportsInterface(interfaceId);
     }
 
+    function updateModelURI(uint256 tokenId, string memory newModelURI) public {
+        require(ownerOf(tokenId) == msg.sender, "Not the owner");
+        alpacas[tokenId].modelURI = newModelURI;
+        emit ModelUpdated(tokenId, newModelURI);
+    }
+
+    function getAllTokensByOwner(address owner) public view returns (uint256[] memory) {
+        uint256 tokenCount = 0;
+        uint256 currentId = _tokenIdCounter;
+        
+        // Count tokens owned by user
+        for (uint256 i = 1; i <= currentId; i++) {
+            try this.ownerOf(i) returns (address tokenOwner) {
+                if (tokenOwner == owner) {
+                    tokenCount++;
+                }
+            } catch {
+                // Token doesn't exist, skip
+            }
+        }
+        
+        // Create array and fill with token IDs
+        uint256[] memory tokenIds = new uint256[](tokenCount);
+        uint256 index = 0;
+        
+        for (uint256 i = 1; i <= currentId; i++) {
+            try this.ownerOf(i) returns (address tokenOwner) {
+                if (tokenOwner == owner) {
+                    tokenIds[index] = i;
+                    index++;
+                }
+            } catch {
+                // Token doesn't exist, skip
+            }
+        }
+        
+        return tokenIds;
+    }
+
     function withdraw() public onlyOwner {
         payable(owner()).transfer(address(this).balance);
     }
