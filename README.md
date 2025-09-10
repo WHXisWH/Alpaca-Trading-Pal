@@ -118,11 +118,8 @@ Open [http://localhost:3000](http://localhost:3000) to see your Alpaca Trading P
 If you need to redeploy or deploy to other networks:
 
 ```bash
-# Compile contracts
-npx hardhat compile
-
-# Deploy to 0G Galileo Testnet
-npm run deploy
+# Deploy contracts using Remix IDE
+# Visit https://remix.ethereum.org and deploy to 0G Galileo Testnet
 ```
 
 ## 🏗️ Architecture
@@ -132,7 +129,7 @@ npm run deploy
 - **Frontend**: Next.js 15, TypeScript, Tailwind CSS, Framer Motion
 - **Web3**: Web3Auth, Web3.js, ethers.js v6, MetaMask & WalletConnect Adapters  
 - **Blockchain**: 0G Chain (Galileo Testnet)
-- **Smart Contracts**: Solidity 0.8.20, OpenZeppelin v5 (ERC721 + ERC1155)
+- **Smart Contracts**: Solidity 0.8.20 (deployed via Remix IDE)
 - **AI**: 0G Compute Network (Llama-3.3-70B, DeepSeek-R1-70B)
 - **Storage**: 0G Storage Network
 - **Trading**: Binance API Integration
@@ -366,7 +363,7 @@ npm run lint
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License.
 
 ## 🌟 Acknowledgments
 

@@ -132,8 +132,7 @@ alpaca-trading-pal/
 │   └── logo.webp                    # App Logo
 │
 ├── ⚙️ Configuration Files
-│   ├── hardhat.config.ts           # Hardhat Configuration
-│   ├── next.config.js              # Next.js Configuration
+│   ├── next.config.js              # Next.js Configuration (optional)
 │   ├── tailwind.config.ts          # Tailwind CSS Configuration
 │   ├── tsconfig.json               # TypeScript Configuration
 │   └── package.json                # Dependencies & Scripts
@@ -342,7 +341,7 @@ binanceClient.getAccountBalance();
 - **Next.js**: React framework with SSR/SSG
 - **TypeScript**: Type safety and developer experience
 - **Tailwind CSS**: Utility-first styling
-- **Hardhat**: Ethereum development environment
+- **Remix IDE**: Smart contract deployment environment
 
 ### **Web3 Tools**
 - **Web3Auth**: Multi-wallet authentication with social login
@@ -390,7 +389,7 @@ npm run deploy     # Smart contract deployment
 
 ### **Integration Testing**
 - API route testing with mock data
-- Smart contract testing with Hardhat
+- Smart contract testing via Remix IDE
 - End-to-end user flows
 
 ### **Manual Testing**
