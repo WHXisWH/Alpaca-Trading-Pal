@@ -18,11 +18,20 @@ const MOOD_EMOJIS: { [key: string]: string } = {
 
 const AlpacaCard = memo(function AlpacaCard({ alpaca, tokenId }: AlpacaCardProps) {
   const getEvolutionImage = () => {
-    switch (alpaca.evolutionStage) {
-      case 1: return "/alpaca/moderate.webp"; // Adolescent
-      case 2: return "/alpaca/aggressive.webp"; // Adult
-      case 3: return "/alpaca/aggressive.webp"; // Master
-      default: return "/alpaca/conservative.webp"; // Infant
+    // For evolved stages, use evolution-based images
+    if (alpaca.evolutionStage >= 2) {
+      return "/alpaca/aggressive.webp"; // Adult/Master - most aggressive
+    }
+    if (alpaca.evolutionStage === 1) {
+      return "/alpaca/moderate.webp"; // Adolescent - balanced
+    }
+    
+    // For infant stage (0), use appearance based on traits
+    switch (alpaca.riskAppetite) {
+      case 0: return "/alpaca/conservative.webp"; // Low risk
+      case 1: return "/alpaca/moderate.webp"; // Medium risk  
+      case 2: return "/alpaca/aggressive.webp"; // High risk
+      default: return "/alpaca/default.webp"; // Fallback
     }
   };
 
@@ -43,7 +52,7 @@ const AlpacaCard = memo(function AlpacaCard({ alpaca, tokenId }: AlpacaCardProps
         <p className="text-sm text-gray-500">Token ID: #{tokenId}</p>
       </CardHeader>
       <CardContent>
-        <div className="flex justify-around text-center">
+        <div className="grid grid-cols-2 gap-3 text-center mb-4">
           <div>
             <p className="text-xs text-gray-500">Level</p>
             <p className="text-lg font-bold">{alpaca.level}</p>
@@ -55,6 +64,14 @@ const AlpacaCard = memo(function AlpacaCard({ alpaca, tokenId }: AlpacaCardProps
           <div>
             <p className="text-xs text-gray-500">Trades</p>
             <p className="text-lg font-bold">{alpaca.totalTrades}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500">Risk Style</p>
+            <p className="text-sm font-bold text-amber-700">
+              {alpaca.riskAppetite === 0 ? "🛡️ Conservative" : 
+               alpaca.riskAppetite === 1 ? "⚖️ Moderate" : 
+               "⚡ Aggressive"}
+            </p>
           </div>
         </div>
         <div className="mt-4">

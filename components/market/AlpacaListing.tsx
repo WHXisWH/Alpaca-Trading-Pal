@@ -15,6 +15,17 @@ interface AlpacaListingProps {
 }
 
 export default function AlpacaListing({ listing }: AlpacaListingProps) {
+  // Generate consistent image based on listing ID for variety
+  const getAlpacaImage = () => {
+    const hash = parseInt(listing.id) % 4;
+    switch (hash) {
+      case 0: return "/alpaca/conservative.webp";
+      case 1: return "/alpaca/moderate.webp";
+      case 2: return "/alpaca/aggressive.webp";
+      default: return "/alpaca/default.webp";
+    }
+  };
+
   return (
     <motion.div
       whileHover={{ scale: 1.03 }}
@@ -22,7 +33,7 @@ export default function AlpacaListing({ listing }: AlpacaListingProps) {
     >
       <div className="text-center mb-4">
         <Image
-          src="/alpaca/moderate.webp"
+          src={getAlpacaImage()}
           alt={listing.name}
           width={120}
           height={120}
