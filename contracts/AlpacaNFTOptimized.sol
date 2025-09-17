@@ -297,36 +297,26 @@ contract AlpacaNFTOptimized is ERC721, ERC721URIStorage, Ownable, ReentrancyGuar
     }
 
     function getAllTokensByOwner(address owner) public view returns (uint256[] memory) {
-        uint256 tokenCount = 0;
-        uint256 currentId = _tokenIdCounter;
-        
-        // Count tokens owned by user
-        for (uint256 i = 1; i <= currentId; i++) {
-            try this.ownerOf(i) returns (address tokenOwner) {
-                if (tokenOwner == owner) {
-                    tokenCount++;
-                }
-            } catch {
-                // Token doesn't exist, skip
+        uint256 currentSupply = _tokenIdCounter; // tokenIds 0.._tokenIdCounter-1
+        uint256 count = 0;
+        for (uint256 i = 0; i < currentSupply; i++) {
+            if (_ownerOf(i) == owner) {
+                count++;
             }
         }
-        
-        // Create array and fill with token IDs
-        uint256[] memory tokenIds = new uint256[](tokenCount);
-        uint256 index = 0;
-        
-        for (uint256 i = 1; i <= currentId; i++) {
-            try this.ownerOf(i) returns (address tokenOwner) {
-                if (tokenOwner == owner) {
-                    tokenIds[index] = i;
-                    index++;
-                }
-            } catch {
-                // Token doesn't exist, skip
+
+        uint256[] memory tokenIds = new uint256[](count);
+        uint256 idx = 0;
+        for (uint256 i = 0; i < currentSupply; i++) {
+            if (_ownerOf(i) == owner) {
+                tokenIds[idx++] = i;
             }
         }
-        
         return tokenIds;
+    }
+
+    function totalSupply() public view returns (uint256) {
+        return _tokenIdCounter;
     }
 
     function withdraw() public onlyOwner {
