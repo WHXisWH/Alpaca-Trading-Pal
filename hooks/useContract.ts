@@ -5,6 +5,7 @@ import { CONTRACT_ADDRESSES } from "@/lib/contracts/addresses";
 import { MintAlpacaParams, FeedKnowledgeParams, RecordTradeParams } from "@/types/alpaca";
 import { ethers } from "ethers";
 import Web3 from "web3";
+import { getReadOnlyWeb3 } from "@/lib/web3/readProvider";
 
 export function useAlpacaContract() {
   const { web3, address } = useWeb3();
@@ -135,21 +136,41 @@ export function useAlpacaRead(tokenId: string | undefined) {
   const [error, setError] = useState<Error | null>(null);
 
   const fetchAlpaca = useCallback(async () => {
-    if (!web3 || !tokenId || CONTRACT_ADDRESSES.ALPACA_NFT === "0x0000000000000000000000000000000000000000") {
+    if (!tokenId || CONTRACT_ADDRESSES.ALPACA_NFT === "0x0000000000000000000000000000000000000000") {
       return;
     }
 
     setIsLoading(true);
     setError(null);
-    
-    try {
-      const contract = new web3.eth.Contract(
+
+    const primaryWeb3 = web3;
+    const fallbackWeb3 = getReadOnlyWeb3();
+
+    const attemptFetch = async (w3: any) => {
+      const contract = new w3.eth.Contract(
         ALPACA_NFT_ABI as any,
         CONTRACT_ADDRESSES.ALPACA_NFT
       );
-      
-      const result = await contract.methods.getAlpaca(tokenId).call();
-      setAlpaca(result);
+      return await contract.methods.getAlpaca(tokenId).call();
+    };
+
+    try {
+      if (primaryWeb3) {
+        try {
+          const result = await attemptFetch(primaryWeb3);
+          setAlpaca(result);
+        } catch (e) {
+          if (fallbackWeb3) {
+            const result = await attemptFetch(fallbackWeb3);
+            setAlpaca(result);
+          } else {
+            throw e;
+          }
+        }
+      } else if (fallbackWeb3) {
+        const result = await attemptFetch(fallbackWeb3);
+        setAlpaca(result);
+      }
     } catch (err) {
       setError(err as Error);
     } finally {

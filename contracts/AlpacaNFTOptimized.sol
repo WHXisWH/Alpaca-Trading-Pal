@@ -13,6 +13,7 @@ interface IAlpacaItems {
 contract AlpacaNFTOptimized is ERC721, ERC721URIStorage, Ownable, ReentrancyGuard {
     uint256 private _tokenIdCounter;
     uint256 private _batchNonce;
+    string private _baseTokenURI;
 
     struct AlpacaTraits {
         string name;
@@ -70,8 +71,18 @@ contract AlpacaNFTOptimized is ERC721, ERC721URIStorage, Ownable, ReentrancyGuar
     event ModelDataStored(uint256 tokenId, address provider);
     event ModelTransferred(uint256 tokenId, address from, address to);
     event GasOptimizationApplied(uint256 gasUsed, uint256 gasSaved);
+    event BaseURIUpdated(string previousBaseURI, string newBaseURI);
 
     constructor() ERC721("Alpaca Trading Pal Optimized", "ALPACA-OPT") Ownable(msg.sender) {}
+
+    function setBaseURI(string memory newBaseURI) external onlyOwner {
+        emit BaseURIUpdated(_baseTokenURI, newBaseURI);
+        _baseTokenURI = newBaseURI;
+    }
+
+    function _baseURI() internal view override returns (string memory) {
+        return _baseTokenURI;
+    }
 
     function mintAlpaca(string memory _name) public payable {
         require(msg.value >= mintPrice, "Insufficient payment");
