@@ -1,6 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { binanceClient } from '@/lib/trading/binance';
 import { ZGComputeClient } from '@/lib/0g/compute';
+import { zgStorageServer } from '@/lib/0g/storage-server';
+
+// Simple per-process rate limiter and idempotency cache (best-effort on serverless)
+const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
+const RATE_LIMIT_MAX = 60; // per IP
+const rateMap: Map<string, { count: number; windowStart: number }> = new Map();
+
+const IDEM_TTL_MS = 10 * 60_000; // 10 minutes
+const idempMap: Map<string, { ts: number; result: any }> = new Map();
+
+function clientIP(req: NextRequest): string {
+  const xfwd = req.headers.get('x-forwarded-for');
+  return (xfwd?.split(',')[0] || 'unknown').trim();
+}
+
+function rateLimit(ip: string): boolean {
+  const now = Date.now();
+  const rec = rateMap.get(ip);
+  if (!rec || now - rec.windowStart > RATE_LIMIT_WINDOW_MS) {
+    rateMap.set(ip, { count: 1, windowStart: now });
+    return true;
+  }
+  if (rec.count >= RATE_LIMIT_MAX) return false;
+  rec.count += 1;
+  return true;
+}
+
+function validateSymbol(sym: any): string {
+  if (typeof sym !== 'string') throw new Error('Invalid symbol');
+  const s = sym.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (!s || s.length > 20) throw new Error('Invalid symbol');
+  return s;
+}
+
+function coerceNumber(n: any, name: string): number {
+  const v = typeof n === 'string' ? Number(n) : n;
+  if (!Number.isFinite(v) || v <= 0) throw new Error(`Invalid ${name}`);
+  return v;
+}
 
 const zgCompute = new ZGComputeClient();
 
@@ -9,38 +48,78 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { action, alpacaId, signal, symbol, symbols } = body;
 
+    // Rate limit
+    const ip = clientIP(request);
+    if (!rateLimit(ip)) {
+      return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
+    }
+
+    // Idempotency (best-effort)
+    const idempotencyKey = request.headers.get('Idempotency-Key') || '';
+    if (idempotencyKey) {
+      const existing = idempMap.get(idempotencyKey);
+      if (existing && Date.now() - existing.ts < IDEM_TTL_MS) {
+        return NextResponse.json({ ...existing.result, idempotencyKey, cached: true });
+      }
+    }
+
     switch (action) {
-      case 'getMarketData':
-        const marketData = await binanceClient.getMarketData(symbol);
+      case 'getMarketData': {
+        const marketData = await binanceClient.getMarketData(validateSymbol(symbol));
         return NextResponse.json({
           success: true,
           marketData,
           timestamp: Date.now()
         });
+      }
 
-      case 'getMultipleMarketData':
-        const multipleData = await binanceClient.getMultipleMarketData(symbols);
+      case 'getMultipleMarketData': {
+        const safeSymbols = Array.isArray(symbols) ? symbols.map(validateSymbol) : undefined;
+        const multipleData = await binanceClient.getMultipleMarketData(safeSymbols);
         return NextResponse.json({
           success: true,
           marketData: multipleData,
           count: multipleData.length
         });
+      }
 
-      case 'executeTradeSignal':
-        // Execute the trade signal
-        const orderResult = await binanceClient.executeTradeSignal(signal, alpacaId);
-        
-        // Create trade record
+      case 'executeTradeSignal': {
+        if (!alpacaId) throw new Error('alpacaId required');
+        const safeSignal = {
+          action: signal?.action === 'SELL' ? 'SELL' : signal?.action === 'BUY' ? 'BUY' : 'HOLD',
+          symbol: validateSymbol(signal?.symbol || symbol),
+          quantity: coerceNumber(signal?.quantity ?? 0.001, 'quantity'),
+          price: coerceNumber(signal?.price ?? 0, 'price'),
+          reason: String(signal?.reason || 'AI strategy'),
+        };
+
+        const orderResult = await binanceClient.executeTradeSignal(safeSignal as any, alpacaId);
         const tradeRecord = await binanceClient.createTradeRecord(orderResult, alpacaId);
-        
-        return NextResponse.json({
+
+        // Audit log to 0G Storage (best-effort)
+        let audit: any = null;
+        try {
+          audit = await zgStorageServer.uploadKnowledge({
+            type: 'performance',
+            content: JSON.stringify({ idempotencyKey, ip, action: 'executeTradeSignal', safeSignal, orderResult, tradeRecord }),
+            tokenId: String(alpacaId),
+            metadata: { symbol: safeSignal.symbol, side: safeSignal.action, simulated: !!orderResult.simulated, mode: orderResult.mode || 'simulation' }
+          });
+        } catch (_) {}
+
+        const result = {
           success: true,
           order: orderResult,
           tradeRecord,
-          message: `${signal.action} order executed for Alpaca ${alpacaId}`
-        });
+          audit,
+          message: `${safeSignal.action} order executed for Alpaca ${alpacaId}`,
+          idempotencyKey: idempotencyKey || undefined,
+        };
+        if (idempotencyKey) idempMap.set(idempotencyKey, { ts: Date.now(), result });
+        return NextResponse.json(result);
+      }
 
-      case 'generateTradingSignal':
+      case 'generateTradingSignal': {
         // Use 0G Compute to generate trading signal
         const { marketData: currentMarket, alpacaContext } = body;
         
@@ -54,7 +133,7 @@ export async function POST(request: NextRequest) {
         const tradingSignal = {
           action: strategy.result.includes("BUY") ? "BUY" : 
                  strategy.result.includes("SELL") ? "SELL" : "HOLD",
-          symbol: currentMarket.symbol || "BTCUSDT",
+          symbol: validateSymbol(currentMarket.symbol || "BTCUSDT"),
           quantity: 0.001,
           price: parseFloat(currentMarket.price || "0"),
           reason: "Generated by 0G AI Strategy",
@@ -67,22 +146,25 @@ export async function POST(request: NextRequest) {
           strategy: strategy.result,
           verified: strategy.verified
         });
+      }
 
-      case 'getBalance':
+      case 'getBalance': {
         const balance = await binanceClient.getAccountBalance();
         return NextResponse.json({
           success: true,
           balance,
           message: "Account balance retrieved"
         });
+      }
 
-      case 'autoTrading':
+      case 'autoTrading': {
         // Start automated trading for an Alpaca
-        const autoResult = await performAutoTrading(alpacaId, body.config);
+        const autoResult = await performAutoTrading(alpacaId, body.config, idempotencyKey, ip);
         return NextResponse.json({
           success: true,
           ...autoResult
         });
+      }
 
       default:
         return NextResponse.json(
@@ -149,12 +231,12 @@ export async function GET(request: NextRequest) {
   }
 }
 
-async function performAutoTrading(alpacaId: string, config: any) {
+async function performAutoTrading(alpacaId: string, config: any, idempotencyKey?: string, ip?: string) {
   try {
     console.log(`🤖 Starting auto trading for Alpaca ${alpacaId}`);
     
     // Get current market data
-    const marketData = await binanceClient.getMarketData(config.symbol || "BTCUSDT");
+    const marketData = await binanceClient.getMarketData(validateSymbol(config.symbol || "BTCUSDT"));
     
     // Initialize 0G Compute
     await zgCompute.initialize();
@@ -172,7 +254,7 @@ async function performAutoTrading(alpacaId: string, config: any) {
     if (shouldBuy || shouldSell) {
       const signal = {
         action: shouldBuy ? "BUY" : "SELL" as "BUY" | "SELL",
-        symbol: config.symbol || "BTCUSDT",
+        symbol: validateSymbol(config.symbol || "BTCUSDT"),
         quantity: config.quantity || 0.001,
         price: parseFloat(marketData.price),
         reason: "Auto-generated by AI strategy"
@@ -180,12 +262,23 @@ async function performAutoTrading(alpacaId: string, config: any) {
       
       const orderResult = await binanceClient.executeTradeSignal(signal, alpacaId);
       const tradeRecord = await binanceClient.createTradeRecord(orderResult, alpacaId);
+      // Audit log
+      let audit: any = null;
+      try {
+        audit = await zgStorageServer.uploadKnowledge({
+          type: 'performance',
+          content: JSON.stringify({ idempotencyKey, ip, action: 'autoTrading', signal, orderResult, tradeRecord }),
+          tokenId: String(alpacaId),
+          metadata: { symbol: signal.symbol, side: signal.action, simulated: !!orderResult.simulated, mode: orderResult.mode || 'simulation' }
+        });
+      } catch (_) {}
       
       return {
         action: "trade_executed",
         signal,
         order: orderResult,
         tradeRecord,
+        audit,
         strategy: strategy.result
       };
     } else {

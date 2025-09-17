@@ -3,7 +3,10 @@ import crypto from "crypto";
 import { TradeRecord } from "@/types/trading";
 
 const BINANCE_TESTNET_API = "https://testnet.binance.vision/api/v3";
-const API_KEY = process.env.NEXT_PUBLIC_BINANCE_API_KEY || "";
+// Trading mode: "simulation" (default) or "testnet"
+const TRADING_MODE = (process.env.TRADING_MODE || "simulation").toLowerCase();
+// Read server-side secrets only; keep NEXT_PUBLIC as last-resort fallback to avoid breaking older envs
+const API_KEY = process.env.BINANCE_API_KEY || process.env.NEXT_PUBLIC_BINANCE_API_KEY || "";
 const API_SECRET = process.env.BINANCE_API_SECRET || "";
 
 // Popular crypto pairs for demo
@@ -39,6 +42,10 @@ export interface OrderResult {
   price: number;
   status: string;
   timestamp: number;
+  simulated?: boolean;
+  mode?: "simulation" | "testnet";
+  fillPrice?: number;
+  slippageBps?: number;
 }
 
 export class BinanceClient {
@@ -49,10 +56,12 @@ export class BinanceClient {
   constructor(apiKey?: string, apiSecret?: string) {
     this.apiKey = apiKey || API_KEY;
     this.apiSecret = apiSecret || API_SECRET;
-    this.isDemo = !this.apiKey || !this.apiSecret;
-    
+    // Force simulation unless explicitly set to testnet and keys are present
+    this.isDemo = TRADING_MODE !== "testnet" || !this.apiKey || !this.apiSecret;
     if (this.isDemo) {
-      console.log("🔄 Binance client running in demo mode");
+      console.log("🔄 Binance client running in simulation mode");
+    } else {
+      console.log("🔧 Binance client running against testnet (dry-run)");
     }
   }
 
@@ -156,7 +165,9 @@ export class BinanceClient {
           },
         }
       );
-
+      // Even though test endpoint, we return a realistic fill with slippage metadata
+      const slippageBps = Math.round((Math.random() * 2 - 1) * 5); // +/-5 bps
+      const fillPrice = Number((signal.price * (1 + slippageBps / 10000)).toFixed(2));
       return {
         orderId: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         symbol: signal.symbol,
@@ -165,6 +176,10 @@ export class BinanceClient {
         price: signal.price,
         status: "FILLED",
         timestamp: Date.now(),
+        simulated: true,
+        mode: "testnet",
+        fillPrice,
+        slippageBps,
       };
     } catch (error) {
       console.error("Trade execution failed:", error);
@@ -174,14 +189,18 @@ export class BinanceClient {
   }
 
   private simulateTradeExecution(signal: TradeSignal): OrderResult {
-    // Simulate trade execution with realistic delays
-    const orderId = `DEMO-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    
+    // Simulate trade execution with slippage and meta
+    const orderId = `SIM-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const slippageBps = Math.round((Math.random() * 2 - 1) * 10); // +/-10 bps
+    const fillPrice = Number((signal.price * (1 + slippageBps / 10000)).toFixed(2));
+
     console.log(`🎭 Simulated ${signal.action} order:`, {
       orderId,
       symbol: signal.symbol,
       quantity: signal.quantity,
-      price: signal.price
+      reqPrice: signal.price,
+      fillPrice,
+      slippageBps,
     });
 
     return {
@@ -192,6 +211,10 @@ export class BinanceClient {
       price: signal.price,
       status: "FILLED",
       timestamp: Date.now(),
+      simulated: true,
+      mode: "simulation",
+      fillPrice,
+      slippageBps,
     };
   }
 
@@ -261,7 +284,7 @@ export class BinanceClient {
   private calculatePnL(order: OrderResult, currentMarket: MarketData): number {
     // Simplified P&L calculation for demo
     const currentPrice = parseFloat(currentMarket.price);
-    const orderPrice = order.price;
+    const orderPrice = order.fillPrice ?? order.price;
     
     if (order.side === "BUY") {
       return (currentPrice - orderPrice) * order.quantity;

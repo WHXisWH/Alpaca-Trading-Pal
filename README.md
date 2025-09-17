@@ -11,22 +11,10 @@ Alpaca Trading Pal is a revolutionary DeFi application that combines NFTs, AI, a
 
 ## 🌟 Features
 
-### 🦙 **Living Alpaca Experience (v0.5)**
-- **Evolution Stages**: Watch your Alpaca grow from Infant → Adolescent → Adult → Master
-- **Dynamic Moods**: Alpacas react emotionally to trading performance (Ecstatic, Confident, Calm, Frustrated)
-- **Visual Growth**: Each evolution stage unlocks new appearances and abilities
-- **Personality Traits**: Unique characteristics including risk appetite, learning speed, and preferred markets
-
-### 🎮 **Gamification System**
-- **Daily Quests**: Feed your Alpaca, complete trades, visit profiles for XP and rewards
-- **Achievement System**: Unlock badges for milestones like first feed, win streaks, level progression
-- **Equipment & Items**: Equip Crystal Balls (boost win rate), Trading Terminals (reduce slippage), and consume Knowledge Capsules
-- **Inventory Management**: Full ERC1155-based item system with equip/unequip functionality
-
-### 🥚 **Mint & Customize**
-- Create unique Alpaca NFTs with randomized traits on 0G Chain
-- Professional loading states and smooth animations throughout the experience
-- Mobile-optimized touch interfaces with production-grade performance
+### 🥚 **Mint & Hatch**
+- Create unique Alpaca NFTs with randomized traits
+- Each Alpaca has distinct personality: risk appetite, learning speed, preferred markets
+- Powered by 0G Chain's high-performance EVM
 
 ### 🧠 **AI-Powered Intelligence**
 - **Dual AI Models**: Llama-3.3-70B for strategy generation, DeepSeek-R1-70B for advanced analysis
@@ -39,13 +27,11 @@ Alpaca Trading Pal is a revolutionary DeFi application that combines NFTs, AI, a
 - **Bulk Data Upload**: Massive AI training dataset storage with Merkle tree validation
 - **AI Model Weights Storage**: Binary data support for trained model persistence
 - **Smart Fallback System**: Automatic simulation mode for development environments
-- **Quest Integration**: Knowledge feeding contributes to daily quest progression
 
 ### 📈 **Automated Trading**
 - **Binance Integration**: Execute real trades through Binance testnet/mainnet
 - **Risk Management**: Built-in stop-loss, take-profit, and position sizing
 - **Performance Tracking**: Complete P&L and trade history on-chain
-- **Mood-Based Reactions**: Alpaca mood changes based on trading success/failure
 
 ### 💎 **NFT Marketplace**
 - Trade high-performing Alpacas with proven track records
@@ -87,9 +73,9 @@ NEXT_PUBLIC_WEB3AUTH_CLIENT_ID=your_web3auth_client_id
 PRIVATE_KEY=your_private_key_here
 NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID=your_walletconnect_project_id
 
-# Contract Addresses (v0.5 Living Alpaca)  
-NEXT_PUBLIC_ALPACA_NFT_ADDRESS=0x2451c1c2D71eBec5f63e935670c4bb0Ce19381f5
-NEXT_PUBLIC_ITEMS_CONTRACT_ADDRESS=your_items_contract_address
+# Contract Addresses (Deployed)
+NEXT_PUBLIC_ALPACA_NFT_ADDRESS=0xEb8EB967ED8fd93a59d49f4C19b1437969E35278
+NEXT_PUBLIC_ITEMS_CONTRACT_ADDRESS=0xc745283C52E05eE3ee409a165F82dd07e7b2D373
 
 # 0G Network Configuration
 NEXT_PUBLIC_0G_RPC_URL=https://rpc.ankr.com/0g_galileo_testnet_evm
@@ -118,23 +104,25 @@ Open [http://localhost:3000](http://localhost:3000) to see your Alpaca Trading P
 If you need to redeploy or deploy to other networks:
 
 ```bash
-# Deploy contracts using Remix IDE
-# Visit https://remix.ethereum.org and deploy to 0G Galileo Testnet
+# Compile contracts
+npx hardhat compile
+
+# Deploy to 0G Galileo Testnet
+npm run deploy
 ```
 
 ## 🏗️ Architecture
 
 ### Tech Stack
 
-- **Frontend**: Next.js 15, TypeScript, Tailwind CSS, Framer Motion
-- **Web3**: Web3Auth, Web3.js, ethers.js v6, MetaMask & WalletConnect Adapters  
+- **Frontend**: Next.js 15, TypeScript, Tailwind CSS
+- **Web3**: Web3Auth, Web3.js, MetaMask & WalletConnect Adapters
 - **Blockchain**: 0G Chain (Galileo Testnet)
-- **Smart Contracts**: Solidity 0.8.20 (deployed via Remix IDE)
+- **Smart Contracts**: Solidity 0.8.20, OpenZeppelin v5
 - **AI**: 0G Compute Network (Llama-3.3-70B, DeepSeek-R1-70B)
 - **Storage**: 0G Storage Network
 - **Trading**: Binance API Integration
-- **State Management**: React Hooks, localStorage persistence
-- **UI/UX**: Responsive design, loading skeletons, error boundaries
+- **State Management**: Zustand
 
 ### 0G Chain Integration
 
@@ -170,24 +158,19 @@ const strategy = await zgCompute.generateTradingStrategy(
 Visit /mint → Connect Wallet → Name Your Alpaca → Pay 0.01 0G → Receive NFT
 ```
 
-### 2. Complete Daily Quests
+### 2. Feed Knowledge
 ```
-Feed Knowledge → Complete Trades → Visit Profiles → Earn XP & Items → Level Up!
-```
-
-### 3. Equip & Customize  
-```
-Open Inventory → Equip Crystal Ball → Boost Win Rate → Watch Mood Changes
+Go to Alpaca Profile → Add Trading Strategies → Store on 0G Storage → Alpaca Learns
 ```
 
-### 4. Evolution & Achievement
-```
-Gain Experience → Unlock Evolution Stages → Earn Achievements → Show Off Progress
-```
-
-### 5. Advanced Trading
+### 3. Start Trading
 ```
 Enable Auto-Trading → AI Generates Strategies → Execute on Binance → Track Performance
+```
+
+### 4. Grow & Trade
+```
+Alpaca Gains Experience → Performance Improves → List on Marketplace → Profit!
 ```
 
 ## 🔧 API Reference
@@ -233,12 +216,12 @@ POST /api/trading
 
 ### Contract Addresses
 
-#### Main Contracts (v0.5 - Living Alpaca)
+#### Main Contract (v0.3.0 - Optimized)
 ```
-AlpacaNFTOptimized: 0x2451c1c2D71eBec5f63e935670c4bb0Ce19381f5 (with evolution & equipment)
-AlpacaItems (ERC1155): [Deploy AlpacaItems.sol for equipment system]
+AlpacaNFTOptimized: [Deploy after v0.3.0 update]
+Legacy AlpacaNFT: 0x2451c1c2D71eBec5f63e935670c4bb0Ce19381f5
 ```
-> 🦙 **v0.5 Features**: Evolution stages, dynamic moods, ERC1155 equipment system, daily quests, and achievements!
+> 🎯 **Contract Update**: v0.3.0 introduces AlpacaNFTOptimized.sol with batch operations, 85% gas savings, and enhanced 0G ecosystem integration.
 
 #### 0G Network Services
 ```
@@ -256,30 +239,19 @@ WrappedOG: 0x0000000000000000000000000000000000001002 (DeFi token wrapping)
 ## 🎯 Smart Contract Features
 
 ```solidity
-// v0.5 Living Alpaca Features
-struct AlpacaTraits {
-    string name;
-    uint256 level;
-    uint256 experience;
-    // ... other traits
-    uint8 evolutionStage;  // 0=Infant, 1=Adolescent, 2=Adult, 3=Master
-    uint256 equipmentId;   // Currently equipped item ID
-}
+// v0.3.0 Optimized Batch Operations
+function batchMintAlpacas(string[] memory _names) public payable
+function batchFeedKnowledge(BatchKnowledgeData[] memory _knowledgeBatch) public
+function batchRecordTrades(BatchTradeData[] memory _tradeBatch) public
 
-// Evolution & Equipment System
-function equipItem(uint256 tokenId, uint256 itemId) public
-function unequipItem(uint256 tokenId) public
-event AlpacaEvolved(uint256 indexed tokenId, uint8 newStage);
-
-// ERC1155 Items Contract (AlpacaItems.sol)
-function mint(address account, uint256 id, uint256 amount, bytes data) public onlyOwner
-// Item IDs: 1=Crystal Ball, 2=Trading Terminal, 101=Knowledge Capsule
-
-// Legacy Operations (still supported)
+// Legacy Individual Operations (still supported)
 function mintAlpaca(string memory _name) public payable
 function feedKnowledge(uint256 tokenId, string memory knowledge) public
 function recordTrade(uint256 tokenId, int256 pnl, bool isWin) public
+
+// Enhanced Data Retrieval
 function getAlpaca(uint256 tokenId) public view returns (AlpacaTraits memory)
+function optimizedGetMultipleAlpacas(uint256[] memory tokenIds) public view returns (AlpacaTraits[] memory)
 ```
 
 ## 🔐 Security Features
@@ -322,11 +294,8 @@ npm run type-check
 - [x] **v0.1.0 - MVP**: Core Alpaca NFT and trading functionality
 - [x] **v0.2.0 - 0G Integration**: Storage, Compute, and Chain integration  
 - [x] **v0.3.0 - Complete 0G Stack**: Precompiled contracts, batch operations, gas optimization
-- [x] **v0.4.0 - Performance & UX**: React.memo optimization, loading skeletons, error boundaries, animations
-- [x] **v0.5.0 - Living Alpaca** 🦙: Evolution stages, dynamic moods, daily quests, achievements, equipment system
-- [ ] **v0.6.0 - Advanced Equipment**: Master evolution stage, equipment effects, item marketplace
-- [ ] **v0.7.0 - AI Enhancement**: Custom model training, analytics dashboard, DeFi integration  
-- [ ] **v0.8.0 - Social Features**: Collaborative intelligence, live trading, governance platform
+- [ ] **v0.4.0 - AI Enhancement**: Custom model training, analytics dashboard, DeFi integration
+- [ ] **v0.5.0 - Advanced Features**: Collaborative intelligence, live trading, governance platform
 
 ## 🛠️ Troubleshooting
 
@@ -363,7 +332,7 @@ npm run lint
 
 ## 📄 License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🌟 Acknowledgments
 

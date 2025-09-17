@@ -1,13 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { zgStorageServer } from '@/lib/0g/storage-server';
 
+// Basic rate limit to harden the endpoint (best-effort)
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX = 60;
+const rateMap: Map<string, { count: number; windowStart: number }> = new Map();
+
+function clientIP(req: NextRequest): string {
+  const xfwd = req.headers.get('x-forwarded-for');
+  return (xfwd?.split(',')[0] || 'unknown').trim();
+}
+
+function rateLimit(ip: string): boolean {
+  const now = Date.now();
+  const rec = rateMap.get(ip);
+  if (!rec || now - rec.windowStart > RATE_LIMIT_WINDOW_MS) {
+    rateMap.set(ip, { count: 1, windowStart: now });
+    return true;
+    }
+  if (rec.count >= RATE_LIMIT_MAX) return false;
+  rec.count += 1;
+  return true;
+}
+
 export async function POST(request: NextRequest) {
   try {
+    const ip = clientIP(request);
+    if (!rateLimit(ip)) {
+      return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
+    }
     const body = await request.json();
     const { action, data, tokenId, storageUrl, trainingDatasets, modelWeights, modelConfig } = body;
 
     switch (action) {
-      case 'uploadKnowledge':
+      case 'uploadKnowledge': {
+        if (!data?.content || !data?.type || !data?.tokenId) {
+          return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+        }
         const uploadResult = await zgStorageServer.uploadKnowledge({
           type: data.type || "knowledge",
           content: data.content,
@@ -16,21 +45,37 @@ export async function POST(request: NextRequest) {
         });
         
         return NextResponse.json(uploadResult);
+      }
 
-      case 'downloadFromStorage':
+      case 'downloadFromStorage': {
+        if (!storageUrl || typeof storageUrl !== 'string') {
+          return NextResponse.json({ error: 'storageUrl required' }, { status: 400 });
+        }
         const downloadResult = await zgStorageServer.downloadFromStorage(storageUrl);
         return NextResponse.json(downloadResult);
+      }
 
-      case 'uploadBulkTrainingData':
+      case 'uploadBulkTrainingData': {
+        if (!Array.isArray(trainingDatasets) || !tokenId) {
+          return NextResponse.json({ error: 'tokenId and trainingDatasets required' }, { status: 400 });
+        }
         const bulkResult = await zgStorageServer.uploadBulkTrainingData(tokenId, trainingDatasets);
         return NextResponse.json(bulkResult);
+      }
 
-      case 'uploadAIModelWeights':
+      case 'uploadAIModelWeights': {
+        if (!tokenId || !modelWeights || !modelConfig) {
+          return NextResponse.json({ error: 'tokenId, modelWeights, modelConfig required' }, { status: 400 });
+        }
         const weightsBuffer = Buffer.from(modelWeights, 'base64').buffer;
         const weightsResult = await zgStorageServer.uploadAIModelWeights(tokenId, weightsBuffer, modelConfig);
         return NextResponse.json(weightsResult);
+      }
 
-      case 'uploadModel':
+      case 'uploadModel': {
+        if (!tokenId || !data) {
+          return NextResponse.json({ error: 'tokenId and data required' }, { status: 400 });
+        }
         const modelResult = await zgStorageServer.uploadKnowledge({
           type: "model",
           content: JSON.stringify(data),
@@ -38,8 +83,12 @@ export async function POST(request: NextRequest) {
           metadata: { modelName: data.name, architecture: data.architecture }
         });
         return NextResponse.json(modelResult);
+      }
 
-      case 'uploadPerformance':
+      case 'uploadPerformance': {
+        if (!tokenId || !data) {
+          return NextResponse.json({ error: 'tokenId and data required' }, { status: 400 });
+        }
         const perfResult = await zgStorageServer.uploadKnowledge({
           type: "performance",
           content: JSON.stringify(data),
@@ -47,6 +96,7 @@ export async function POST(request: NextRequest) {
           metadata: { tradesCount: data.trades?.length || 0, period: "30d" }
         });
         return NextResponse.json(perfResult);
+      }
 
       default:
         return NextResponse.json(
