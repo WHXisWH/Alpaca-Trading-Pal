@@ -6,7 +6,47 @@ import { CONTRACT_ADDRESSES } from '@/lib/contracts/addresses';
 const web3 = new Web3("https://rpc.ankr.com/0g_galileo_testnet_evm");
 // Convert address to proper checksum format to avoid Web3 validation errors
 const contractAddress = web3.utils.toChecksumAddress(CONTRACT_ADDRESSES.ALPACA_NFT);
-const contract = new web3.eth.Contract(ALPACA_NFT_ABI as any, contractAddress);
+function getContract(abi: any) {
+  return new web3.eth.Contract(abi as any, contractAddress);
+}
+
+const contract = getContract(ALPACA_NFT_ABI as any);
+
+const LEGACY_GETALPACA_ABI = [
+  {
+    inputs: [{ name: 'tokenId', type: 'uint256' }],
+    name: 'getAlpaca',
+    outputs: [
+      {
+        components: [
+          { name: 'name', type: 'string' },
+          { name: 'riskAppetite', type: 'uint8' },
+          { name: 'learningSpeed', type: 'uint8' },
+          { name: 'preferredMarket', type: 'uint8' },
+          { name: 'level', type: 'uint256' },
+          { name: 'experience', type: 'uint256' },
+          { name: 'modelURI', type: 'string' },
+          { name: 'performanceURI', type: 'string' },
+          { name: 'totalTrades', type: 'uint256' },
+          { name: 'totalPnL', type: 'int256' },
+          { name: 'wins', type: 'uint256' },
+          { name: 'birthTime', type: 'uint256' },
+        ],
+        name: '',
+        type: 'tuple',
+      },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [{ name: 'tokenId', type: 'uint256' }],
+    name: 'getWinRate',
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+];
 
 const RISK_NAMES = ["Conservative", "Moderate", "Aggressive"];
 const SPEED_NAMES = ["Steady", "Normal", "Fast"];
@@ -36,8 +76,20 @@ export async function GET(
       return NextResponse.json({ error: "Invalid token ID" }, { status: 400 });
     }
 
-    const alpaca = await contract.methods.getAlpaca(tokenId).call();
-    const winRate = await contract.methods.getWinRate(tokenId).call();
+    let alpaca: any;
+    let winRate: any;
+    try {
+      alpaca = await contract.methods.getAlpaca(tokenId).call();
+      winRate = await contract.methods.getWinRate(tokenId).call();
+    } catch (e: any) {
+      const msg = (e?.message || '').toString();
+      const decodeErr = msg.includes('invalid codepoint') || msg.includes('missing continuation byte') || msg.includes('could not decode');
+      if (!decodeErr) throw e;
+      const legacy = getContract(LEGACY_GETALPACA_ABI as any);
+      alpaca = await legacy.methods.getAlpaca(tokenId).call();
+      winRate = await legacy.methods.getWinRate(tokenId).call();
+      alpaca = { ...alpaca, evolutionStage: 0, equipmentId: 0 };
+    }
 
     const metadata = {
       name: `${alpaca.name} #${tokenId}`,

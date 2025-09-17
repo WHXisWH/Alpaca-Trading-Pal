@@ -151,25 +151,85 @@ export function useAlpacaRead(tokenId: string | undefined) {
         ALPACA_NFT_ABI as any,
         CONTRACT_ADDRESSES.ALPACA_NFT
       );
-      return await contract.methods.getAlpaca(tokenId).call();
+      try {
+        const res = await contract.methods.getAlpaca(tokenId).call();
+        return res;
+      } catch (e: any) {
+        const msg = (e?.message || "").toString();
+        const decodeErr = msg.includes("invalid codepoint") || msg.includes("missing continuation byte") || msg.includes("could not decode");
+        if (!decodeErr) throw e;
+        // Fallback to legacy tuple layout (without evolutionStage/equipmentId)
+        const LEGACY_ABI = [
+          {
+            inputs: [{ name: "tokenId", type: "uint256" }],
+            name: "getAlpaca",
+            outputs: [
+              {
+                components: [
+                  { name: "name", type: "string" },
+                  { name: "riskAppetite", type: "uint8" },
+                  { name: "learningSpeed", type: "uint8" },
+                  { name: "preferredMarket", type: "uint8" },
+                  { name: "level", type: "uint256" },
+                  { name: "experience", type: "uint256" },
+                  { name: "modelURI", type: "string" },
+                  { name: "performanceURI", type: "string" },
+                  { name: "totalTrades", type: "uint256" },
+                  { name: "totalPnL", type: "int256" },
+                  { name: "wins", type: "uint256" },
+                  { name: "birthTime", type: "uint256" }
+                ],
+                name: "",
+                type: "tuple"
+              }
+            ],
+            stateMutability: "view",
+            type: "function"
+          }
+        ];
+        const legacy = new w3.eth.Contract(LEGACY_ABI as any, CONTRACT_ADDRESSES.ALPACA_NFT);
+        const legacyRes = await legacy.methods.getAlpaca(tokenId).call();
+        // Normalize to new shape by injecting defaults
+        return {
+          ...legacyRes,
+          evolutionStage: legacyRes.evolutionStage ?? 0,
+          equipmentId: legacyRes.equipmentId ?? 0,
+        };
+      }
     };
 
     try {
       if (primaryWeb3) {
         try {
           const result = await attemptFetch(primaryWeb3);
-          setAlpaca(result);
+          // Ensure fields exist for consumers
+          const normalized = {
+            ...result,
+            evolutionStage: (result as any).evolutionStage ?? 0,
+            equipmentId: (result as any).equipmentId ?? 0,
+          };
+          setAlpaca(normalized);
         } catch (e) {
           if (fallbackWeb3) {
             const result = await attemptFetch(fallbackWeb3);
-            setAlpaca(result);
+            const normalized = {
+              ...result,
+              evolutionStage: (result as any).evolutionStage ?? 0,
+              equipmentId: (result as any).equipmentId ?? 0,
+            };
+            setAlpaca(normalized);
           } else {
             throw e;
           }
         }
       } else if (fallbackWeb3) {
         const result = await attemptFetch(fallbackWeb3);
-        setAlpaca(result);
+        const normalized = {
+          ...result,
+          evolutionStage: (result as any).evolutionStage ?? 0,
+          equipmentId: (result as any).equipmentId ?? 0,
+        };
+        setAlpaca(normalized);
       }
     } catch (err) {
       setError(err as Error);
