@@ -155,20 +155,11 @@ export function useAlpacaRead(tokenId: string | undefined) {
     };
 
     try {
-      if (primaryWeb3) {
-        try {
-          const result = await attemptFetch(primaryWeb3);
-          setAlpaca(result);
-        } catch (e) {
-          if (fallbackWeb3) {
-            const result = await attemptFetch(fallbackWeb3);
-            setAlpaca(result);
-          } else {
-            throw e;
-          }
-        }
-      } else if (fallbackWeb3) {
+      if (fallbackWeb3) {
         const result = await attemptFetch(fallbackWeb3);
+        setAlpaca(result);
+      } else if (primaryWeb3) {
+        const result = await attemptFetch(primaryWeb3);
         setAlpaca(result);
       }
     } catch (err) {

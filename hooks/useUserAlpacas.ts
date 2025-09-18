@@ -18,64 +18,31 @@ export function useUserAlpacas(address: string | null) {
     setIsLoading(true);
     setError(null);
 
-    const primaryWeb3 = web3;
+    // Prefer read-only public RPC to avoid MetaMask rate limiting for reads
     const fallbackWeb3 = getReadOnlyWeb3();
+    const primaryWeb3 = web3;
 
     const attemptFetch = async (w3: any) => {
       const contract = new w3.eth.Contract(
         ALPACA_NFT_ABI as any,
         CONTRACT_ADDRESSES.ALPACA_NFT
       );
-
-      console.log("Contract address:", CONTRACT_ADDRESSES.ALPACA_NFT);
-      console.log("User address:", address);
-
-      // Optional quick balance check
-      try {
-        console.log("Calling balanceOf...");
-        const balance = await contract.methods.balanceOf(address).call();
-        console.log(`User balance: ${balance} tokens`);
-        if (balance === '0' || balance === 0) return [] as string[];
-      } catch { /* some contracts might not implement balanceOf properly */ }
-
-      console.log("Calling getAllTokensByOwner...");
       const tokens = await contract.methods.getAllTokensByOwner(address).call();
       return tokens.map((id: any) => id.toString());
     };
 
     try {
-      if (primaryWeb3) {
-        try {
-          const tokens = await attemptFetch(primaryWeb3);
-          setTokenIds(tokens);
-          console.log(`Found ${tokens.length} Alpacas for user ${address}`);
-        } catch (e) {
-          console.warn("Primary provider failed, trying fallback:", e);
-          if (fallbackWeb3) {
-            const tokens = await attemptFetch(fallbackWeb3);
-            setTokenIds(tokens);
-            console.log(`Found ${tokens.length} Alpacas for user ${address} (fallback)`);
-          } else {
-            throw e;
-          }
-        }
-      } else if (fallbackWeb3) {
+      if (fallbackWeb3) {
         const tokens = await attemptFetch(fallbackWeb3);
         setTokenIds(tokens);
-        console.log(`Found ${tokens.length} Alpacas for user ${address} (fallback only)`);
+        console.log(`Found ${tokens.length} Alpacas for user ${address} (read-only RPC)`);
+      } else if (primaryWeb3) {
+        const tokens = await attemptFetch(primaryWeb3);
+        setTokenIds(tokens);
+        console.log(`Found ${tokens.length} Alpacas for user ${address} (wallet provider)`);
       }
     } catch (err) {
       console.error("Failed to fetch user tokens:", err);
-      // Handle RPC node sync issues gracefully
-      if (err && typeof err === 'object' && 'message' in err) {
-        const message = (err as any).message || "";
-        if (message.includes('missing trie node') || message.includes('state is not available')) {
-          console.log("RPC node sync issue detected, showing empty state");
-          setTokenIds([]);
-          setIsLoading(false);
-          return;
-        }
-      }
       setError(err as Error);
     } finally {
       setIsLoading(false);

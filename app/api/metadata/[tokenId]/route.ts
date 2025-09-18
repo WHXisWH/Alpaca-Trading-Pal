@@ -16,12 +16,8 @@ const RISK_NAMES = ["Conservative", "Moderate", "Aggressive"];
 const SPEED_NAMES = ["Steady", "Normal", "Fast"];
 const MARKET_NAMES = ["Crypto", "Forex", "Stocks"];
 
-function getAlpacaImage(riskAppetite: number): string {
-  const baseUrl = process.env.VERCEL_URL 
-    ? `https://${process.env.VERCEL_URL}` 
-    : 'https://alpaca-trading-pal.vercel.app';
-    
-  switch(riskAppetite) {
+function getAlpacaImage(baseUrl: string, riskAppetite: number): string {
+  switch (riskAppetite) {
     case 0: return `${baseUrl}/alpaca/conservative.webp`;
     case 2: return `${baseUrl}/alpaca/aggressive.webp`;
     default: return `${baseUrl}/alpaca/moderate.webp`;
@@ -43,11 +39,12 @@ export async function GET(
     const alpaca = await contract.methods.getAlpaca(tokenId).call();
     const winRate = await contract.methods.getWinRate(tokenId).call();
 
-    const baseUrl = 'https://alpaca-trading-pal.vercel.app';
+    // Use the current request origin to build URLs so any alias/subdomain works
+    const baseUrl = new URL(request.url).origin;
     const metadata = {
       name: `${alpaca.name} #${tokenId}`,
       description: "AI Trading Companion on 0G Chain - Your intelligent NFT that learns, trades, and evolves with market experience.",
-      image: getAlpacaImage(Number(alpaca.riskAppetite)),
+      image: getAlpacaImage(baseUrl, Number(alpaca.riskAppetite)),
       external_url: `${baseUrl}/alpaca/${tokenId}`,
       attributes: [
         {

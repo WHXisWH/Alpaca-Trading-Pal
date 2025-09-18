@@ -34,7 +34,7 @@ export default function MintCard({ name, onNameChange, traits }: MintCardProps) 
     } catch (error) {
       console.error("Minting failed:", error);
       setSuccessInfo(null);
-      setErrorMsg(error instanceof Error ? error.message : "Mint 失败，请重试");
+      setErrorMsg(error instanceof Error ? error.message : "Mint failed. Please try again.");
     } finally {
       setIsMinting(false);
     }
@@ -47,7 +47,7 @@ export default function MintCard({ name, onNameChange, traits }: MintCardProps) 
     >
       {successInfo && (
         <div className="mb-4 p-3 rounded-lg border border-green-200 bg-green-50 text-green-800 text-sm">
-          <div className="font-semibold mb-1">🎉 Mint 成功！</div>
+          <div className="font-semibold mb-1">🎉 Mint succeeded!</div>
           {successInfo.tokenId && (
             <div className="mb-1">Token ID: {successInfo.tokenId}</div>
           )}
@@ -55,17 +55,17 @@ export default function MintCard({ name, onNameChange, traits }: MintCardProps) 
             <div className="mb-2 break-all">Tx: {successInfo.txHash.slice(0, 10)}...{successInfo.txHash.slice(-8)}</div>
           )}
           <div className="flex gap-3">
-            <Link href="/my-alpacas" className="underline">前往 My Alpacas 查看</Link>
-            <button className="underline" onClick={() => setSuccessInfo(null)}>关闭</button>
+            <Link href="/my-alpacas" className="underline">Go to My Alpacas</Link>
+            <button className="underline" onClick={() => setSuccessInfo(null)}>Close</button>
           </div>
         </div>
       )}
 
       {errorMsg && (
         <div className="mb-4 p-3 rounded-lg border border-red-200 bg-red-50 text-red-700 text-sm">
-          <div className="font-semibold mb-1">Mint 失败</div>
+          <div className="font-semibold mb-1">Mint failed</div>
           <div className="mb-2">{errorMsg}</div>
-          <button className="underline" onClick={() => setErrorMsg(null)}>关闭</button>
+          <button className="underline" onClick={() => setErrorMsg(null)}>Close</button>
         </div>
       )}
       <h2 className="text-2xl font-bold text-amber-900 mb-6">
